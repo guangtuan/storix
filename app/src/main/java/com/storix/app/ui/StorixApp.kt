@@ -2,6 +2,7 @@ package com.storix.app.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,10 +43,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -56,6 +56,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -81,6 +82,9 @@ import androidx.navigation.navArgument
 import coil.compose.AsyncImage
 import com.storix.app.data.local.Asset
 import com.storix.app.data.local.AssetCategory
+import com.storix.app.ui.theme.TelegramBlueLight
+import com.storix.app.ui.theme.TelegramNegative
+import com.storix.app.ui.theme.TelegramPositive
 import kotlinx.coroutines.launch
 
 private const val HomeRoute = "home"
@@ -148,33 +152,24 @@ private fun HomeScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("资产总览", fontWeight = FontWeight.SemiBold)
-                        Text(
-                            text = "手动记录真实与虚拟资产",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            )
+            TelegramTopBar(title = "Storix", subtitle = "资产总览")
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            FloatingActionButton(
                 onClick = onAddAsset,
-                icon = { Icon(Icons.Rounded.Add, contentDescription = null) },
-                text = { Text("新增资产") }
-            )
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
+                Icon(Icons.Rounded.Add, contentDescription = null)
+            }
         }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             item {
                 SummaryCard(uiState = uiState)
@@ -197,61 +192,49 @@ private fun HomeScreen(
 private fun SummaryCard(uiState: HomeUiState) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {
-        Box(
-            modifier = Modifier
-                .background(
-                    brush = Brush.linearGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.secondary
-                        )
-                    )
-                )
-                .padding(20.dp)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text(
-                    text = "当前总价值",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.78f)
-                )
-                Text(
-                    text = Formatters.formatCurrency(uiState.totalValue, "CNY"),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SummaryMetric(
-                        title = "资产数量",
-                        value = uiState.assetCount.toString(),
-                        modifier = Modifier.weight(1f)
-                    )
-                    SummaryMetric(
-                        title = "累计成本",
-                        value = Formatters.formatCurrency(uiState.totalCost, "CNY"),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = "总资产",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.78f)
+            )
+            Text(
+                text = Formatters.formatCurrency(uiState.totalValue, "CNY"),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 SummaryMetric(
-                    title = "浮动盈亏",
-                    value = Formatters.formatSignedCurrency(uiState.totalGain, "CNY"),
-                    modifier = Modifier.fillMaxWidth()
+                    title = "持有数量",
+                    value = uiState.assetCount.toString(),
+                    modifier = Modifier.weight(1f)
+                )
+                SummaryMetric(
+                    title = "累计成本",
+                    value = Formatters.formatCurrency(uiState.totalCost, "CNY"),
+                    modifier = Modifier.weight(1f)
                 )
             }
+            SummaryMetric(
+                title = "累计盈亏",
+                value = Formatters.formatSignedCurrency(uiState.totalGain, "CNY"),
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
 
 @Composable
 private fun SummaryMetric(title: String, value: String, modifier: Modifier = Modifier) {
-    ElevatedCard(
+    Card(
         modifier = modifier,
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.18f)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f)
         )
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -272,7 +255,10 @@ private fun SummaryMetric(title: String, value: String, modifier: Modifier = Mod
 
 @Composable
 private fun EmptyStateCard(onAddAsset: () -> Unit) {
-    OutlinedCard(shape = RoundedCornerShape(24.dp)) {
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -291,7 +277,7 @@ private fun EmptyStateCard(onAddAsset: () -> Unit) {
                 text = "先添加一条房产、实物或 NFT 资产，马上就能看到总价值和持有时长。",
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Button(onClick = onAddAsset) {
+            Button(onClick = onAddAsset, shape = RoundedCornerShape(14.dp)) {
                 Text("现在添加")
             }
         }
@@ -300,24 +286,25 @@ private fun EmptyStateCard(onAddAsset: () -> Unit) {
 
 @Composable
 private fun AssetRowCard(asset: Asset, onClick: () -> Unit) {
-    OutlinedCard(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(24.dp)
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(52.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(23.dp))
+                    .background(TelegramBlueLight),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -329,13 +316,8 @@ private fun AssetRowCard(asset: Asset, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(asset.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Text(
-                    text = asset.category.displayName,
+                    text = "${asset.category.displayName} · 已持有 ${Formatters.formatHoldingDays(asset.holdingDays)}",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "已持有 ${Formatters.formatHoldingDays(asset.holdingDays)}",
-                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -370,13 +352,10 @@ private fun DetailScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
-                    }
-                },
-                title = { Text(asset?.name ?: "资产详情") },
+            TelegramTopBar(
+                title = asset?.name ?: "资产详情",
+                subtitle = asset?.category?.displayName ?: "",
+                onBack = onBack,
                 actions = {
                     asset?.let {
                         IconButton(onClick = { onEdit(it.id) }) {
@@ -405,14 +384,17 @@ private fun DetailScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                contentPadding = PaddingValues(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item {
                     AssetImageCard(imageUrl = currentAsset.imageUrl, category = currentAsset.category)
                 }
                 item {
-                    OutlinedCard(shape = RoundedCornerShape(24.dp)) {
+                    Card(
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -445,7 +427,10 @@ private fun DetailScreen(
                 }
                 if (currentAsset.location.isNotBlank() || currentAsset.notes.isNotBlank()) {
                     item {
-                        OutlinedCard(shape = RoundedCornerShape(24.dp)) {
+                        Card(
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        ) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -505,7 +490,10 @@ private fun DetailScreen(
 
 @Composable
 private fun MetricSection(asset: Asset) {
-    OutlinedCard(shape = RoundedCornerShape(24.dp)) {
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -593,13 +581,10 @@ private fun AssetEditorScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
-                    }
-                },
-                title = { Text(if (assetId == null) "新增资产" else "编辑资产") }
+            TelegramTopBar(
+                title = if (assetId == null) "新增资产" else "编辑资产",
+                subtitle = "像 Telegram 一样简洁填写信息",
+                onBack = onBack
             )
         }
     ) { paddingValues ->
@@ -608,8 +593,8 @@ private fun AssetEditorScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = "记录名称、买入成本、当前价值和持有时间，还可以试着从公开接口查找图片。",
@@ -693,7 +678,10 @@ private fun AssetEditorScreen(
                 placeholder = { Text("记录租金情况、藏品状态、交易链接等") }
             )
 
-            OutlinedCard(shape = RoundedCornerShape(24.dp)) {
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -791,7 +779,8 @@ private fun AssetEditorScreen(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !saving
+                enabled = !saving,
+                shape = RoundedCornerShape(14.dp)
             ) {
                 if (saving) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
@@ -824,7 +813,10 @@ private fun CategorySelector(selected: AssetCategory, onSelected: (AssetCategory
 
 @Composable
 private fun AssetImageCard(imageUrl: String?, category: AssetCategory) {
-    OutlinedCard(shape = RoundedCornerShape(24.dp)) {
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
         if (!imageUrl.isNullOrBlank()) {
             AsyncImage(
                 model = imageUrl,
@@ -871,8 +863,46 @@ private fun categoryIcon(category: AssetCategory) = when (category) {
 @Composable
 private fun gainColor(value: Double): Color {
     return when {
-        value > 0 -> Color(0xFF138A64)
-        value < 0 -> MaterialTheme.colorScheme.error
+        value > 0 -> TelegramPositive
+        value < 0 -> TelegramNegative
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TelegramTopBar(
+    title: String,
+    subtitle: String,
+    onBack: (() -> Unit)? = null,
+    actions: @Composable () -> Unit = {}
+) {
+    CenterAlignedTopAppBar(
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            titleContentColor = MaterialTheme.colorScheme.onPrimary,
+            navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+            actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        navigationIcon = {
+            if (onBack != null) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
+                }
+            }
+        },
+        title = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(title, fontWeight = FontWeight.SemiBold)
+                if (subtitle.isNotBlank()) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f)
+                    )
+                }
+            }
+        },
+        actions = { actions() }
+    )
 }

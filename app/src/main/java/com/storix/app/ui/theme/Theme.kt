@@ -7,36 +7,41 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColors = darkColorScheme(
-    primary = Mint,
-    secondary = Sand,
-    tertiary = Rose,
-    background = NightNavy,
-    surface = SlateBlue,
-    onPrimary = NightNavy,
-    onSecondary = Ink,
-    onBackground = Sand,
-    onSurface = Sand
+    primary = TelegramBlue,
+    secondary = TelegramBlueDark,
+    tertiary = TelegramBlueLight,
+    background = TelegramBackgroundDark,
+    surface = TelegramSurfaceDark,
+    surfaceVariant = Color(0xFF2B3A4A),
+    onPrimary = Color.White,
+    onSecondary = Color.White,
+    onBackground = Color(0xFFF5F7FA),
+    onSurface = Color(0xFFF5F7FA),
+    onSurfaceVariant = Color(0xFFA6B3C2)
 )
 
 private val LightColors = lightColorScheme(
-    primary = SlateBlue,
-    secondary = Mint,
-    tertiary = Rose,
-    background = SoftSurface,
-    surface = Sand,
-    onPrimary = SoftSurface,
-    onSecondary = Ink,
-    onBackground = Ink,
-    onSurface = Ink
+    primary = TelegramBlue,
+    secondary = TelegramBlueDark,
+    tertiary = TelegramBlueLight,
+    background = TelegramBackground,
+    surface = TelegramSurface,
+    surfaceVariant = Color(0xFFE8EDF2),
+    onPrimary = Color.White,
+    onSecondary = Color.White,
+    onBackground = TelegramText,
+    onSurface = TelegramText,
+    onSurfaceVariant = TelegramSubtext
 )
 
 @Composable
 fun StorixTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
