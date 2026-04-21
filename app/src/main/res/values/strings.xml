@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Storix</string>
+    <string name="asset_category_real_estate">房产</string>
+    <string name="asset_category_physical">实物</string>
+    <string name="asset_category_nft">NFT/数字藏品</string>
+    <string name="asset_category_crypto">加密货币</string>
+    <string name="back">返回</string>
+    <string name="edit">编辑</string>
+    <string name="delete">删除</string>
+</resources>
