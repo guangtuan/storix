@@ -14,17 +14,17 @@ import kotlinx.coroutines.flow.stateIn
 data class HomeUiState(
     val assets: List<Asset> = emptyList()
 ) {
-    val assetCount: Int
-        get() = assets.size
+    val activeAssetCount: Int
+        get() = assets.count { !it.isRetired }
 
-    val totalValue: Double
-        get() = assets.sumOf { it.currentValue }
+    val retiredAssetCount: Int
+        get() = assets.count { it.isRetired }
 
-    val totalCost: Double
+    val totalOriginalCost: Double
         get() = assets.sumOf { it.purchaseValue }
 
-    val totalGain: Double
-        get() = totalValue - totalCost
+    val activeOriginalCost: Double
+        get() = assets.filterNot { it.isRetired }.sumOf { it.purchaseValue }
 }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -47,8 +47,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         name: String,
         category: AssetCategory,
         description: String,
-        currentValue: Double,
         purchaseValue: Double,
+        isRetired: Boolean,
         purchaseDate: Long,
         currency: String,
         imageUrl: String?,
@@ -62,8 +62,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 name = name.trim(),
                 category = category,
                 description = description.trim(),
-                currentValue = currentValue,
+                currentValue = purchaseValue,
                 purchaseValue = purchaseValue,
+                isRetired = isRetired,
                 purchaseDate = purchaseDate,
                 currency = currency.trim().uppercase().ifBlank { "CNY" },
                 imageUrl = imageUrl?.trim()?.ifBlank { null },

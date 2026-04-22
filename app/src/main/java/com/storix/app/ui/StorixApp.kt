@@ -68,7 +68,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -83,8 +82,6 @@ import coil.compose.AsyncImage
 import com.storix.app.data.local.Asset
 import com.storix.app.data.local.AssetCategory
 import com.storix.app.ui.theme.TelegramBlueLight
-import com.storix.app.ui.theme.TelegramNegative
-import com.storix.app.ui.theme.TelegramPositive
 import kotlinx.coroutines.launch
 
 private const val HomeRoute = "home"
@@ -197,31 +194,31 @@ private fun SummaryCard(uiState: HomeUiState) {
     ) {
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
-                text = "总资产",
+                text = "资产原价",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.78f)
             )
             Text(
-                text = Formatters.formatCurrency(uiState.totalValue, "CNY"),
+                text = Formatters.formatCurrency(uiState.totalOriginalCost, "CNY"),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimary
             )
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 SummaryMetric(
-                    title = "持有数量",
-                    value = uiState.assetCount.toString(),
+                    title = "持有中",
+                    value = uiState.activeAssetCount.toString(),
                     modifier = Modifier.weight(1f)
                 )
                 SummaryMetric(
-                    title = "累计成本",
-                    value = Formatters.formatCurrency(uiState.totalCost, "CNY"),
+                    title = "已退役",
+                    value = uiState.retiredAssetCount.toString(),
                     modifier = Modifier.weight(1f)
                 )
             }
             SummaryMetric(
-                title = "累计盈亏",
-                value = Formatters.formatSignedCurrency(uiState.totalGain, "CNY"),
+                title = "持有中原价",
+                value = Formatters.formatCurrency(uiState.activeOriginalCost, "CNY"),
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -274,7 +271,7 @@ private fun EmptyStateCard(onAddAsset: () -> Unit) {
             )
             Text("还没有资产记录", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(
-                text = "先添加一条房产、实物或 NFT 资产，马上就能看到总价值和持有时长。",
+                text = "先添加一条房产、实物或 NFT 资产，马上就能看到原价、状态和持有时长。",
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Button(onClick = onAddAsset, shape = RoundedCornerShape(14.dp)) {
@@ -316,21 +313,28 @@ private fun AssetRowCard(asset: Asset, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(asset.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Text(
-                    text = "${asset.category.displayName} · 已持有 ${Formatters.formatHoldingDays(asset.holdingDays)}",
+                    text = buildString {
+                        append(asset.category.displayName)
+                        append(" · ")
+                        if (asset.isRetired) {
+                            append("已退役 · ")
+                        }
+                        append("已持有 ")
+                        append(Formatters.formatHoldingPeriod(asset.purchaseDate))
+                    },
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = Formatters.formatCurrency(asset.currentValue, asset.currency),
+                    text = Formatters.formatCurrency(asset.purchaseValue, asset.currency),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = Formatters.formatSignedCurrency(asset.gainLoss, asset.currency),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = gainColor(asset.gainLoss)
+                    text = "原价",
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
         }
@@ -501,16 +505,10 @@ private fun MetricSection(asset: Asset) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text("核心指标", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            DetailLine(Icons.Rounded.Info, "当前价值", Formatters.formatCurrency(asset.currentValue, asset.currency))
-            DetailLine(Icons.Rounded.Info, "买入成本", Formatters.formatCurrency(asset.purchaseValue, asset.currency))
-            DetailLine(
-                Icons.Rounded.Info,
-                "浮动盈亏",
-                "${Formatters.formatSignedCurrency(asset.gainLoss, asset.currency)}  (${Formatters.formatPercent(asset.gainLossPercent)})",
-                valueColor = gainColor(asset.gainLoss)
-            )
+            DetailLine(Icons.Rounded.Info, "原价", Formatters.formatCurrency(asset.purchaseValue, asset.currency))
+            DetailLine(Icons.Rounded.Info, "使用状态", if (asset.isRetired) "已退役" else "使用中")
             DetailLine(Icons.Rounded.CalendarMonth, "买入日期", Formatters.formatDate(asset.purchaseDate))
-            DetailLine(Icons.Rounded.CalendarMonth, "持有时长", Formatters.formatHoldingDays(asset.holdingDays))
+            DetailLine(Icons.Rounded.CalendarMonth, "持有时长", Formatters.formatHoldingPeriod(asset.purchaseDate))
         }
     }
 }
@@ -549,8 +547,8 @@ private fun AssetEditorScreen(
     var loadedFromAsset by remember(assetId) { mutableStateOf(assetId == null) }
     var name by remember(assetId) { mutableStateOf("") }
     var description by remember(assetId) { mutableStateOf("") }
-    var currentValue by remember(assetId) { mutableStateOf("") }
     var purchaseValue by remember(assetId) { mutableStateOf("") }
+    var isRetired by remember(assetId) { mutableStateOf(false) }
     var currency by remember(assetId) { mutableStateOf("CNY") }
     var purchaseDate by remember(assetId) { mutableStateOf(Formatters.formatDate(System.currentTimeMillis())) }
     var location by remember(assetId) { mutableStateOf("") }
@@ -567,8 +565,8 @@ private fun AssetEditorScreen(
         if (!loadedFromAsset) {
             name = asset.name
             description = asset.description
-            currentValue = Formatters.formatNumber(asset.currentValue)
             purchaseValue = Formatters.formatNumber(asset.purchaseValue)
+            isRetired = asset.isRetired
             currency = asset.currency
             purchaseDate = Formatters.formatDate(asset.purchaseDate)
             location = asset.location
@@ -597,7 +595,7 @@ private fun AssetEditorScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "记录名称、买入成本、当前价值和持有时间，还可以试着从公开接口查找图片。",
+                text = "记录名称、原价、使用状态和买入时间，还可以试着从公开接口查找图片。",
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
@@ -615,6 +613,11 @@ private fun AssetEditorScreen(
                 onSelected = { selectedCategory = it.name }
             )
 
+            StatusSelector(
+                isRetired = isRetired,
+                onStatusChanged = { isRetired = it }
+            )
+
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
@@ -625,24 +628,13 @@ private fun AssetEditorScreen(
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
-                    value = currentValue,
-                    onValueChange = { currentValue = it },
-                    modifier = Modifier.weight(1f),
-                    label = { Text("当前价值") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true
-                )
-                OutlinedTextField(
                     value = purchaseValue,
                     onValueChange = { purchaseValue = it },
                     modifier = Modifier.weight(1f),
-                    label = { Text("买入成本") },
+                    label = { Text("原价") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true
                 )
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = currency,
                     onValueChange = { currency = it.uppercase() },
@@ -651,15 +643,16 @@ private fun AssetEditorScreen(
                     placeholder = { Text("CNY") },
                     singleLine = true
                 )
-                OutlinedTextField(
-                    value = purchaseDate,
-                    onValueChange = { purchaseDate = it },
-                    modifier = Modifier.weight(1f),
-                    label = { Text("买入日期") },
-                    placeholder = { Text("2026-04-21") },
-                    singleLine = true
-                )
             }
+
+            OutlinedTextField(
+                value = purchaseDate,
+                onValueChange = { purchaseDate = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("买入日期") },
+                placeholder = { Text("2026-04-21") },
+                singleLine = true
+            )
 
             OutlinedTextField(
                 value = location,
@@ -743,14 +736,12 @@ private fun AssetEditorScreen(
 
             Button(
                 onClick = {
-                    val parsedCurrent = currentValue.toDoubleOrNull()
                     val parsedPurchase = purchaseValue.toDoubleOrNull()
                     val parsedDate = Formatters.parseDate(purchaseDate)
 
                     errorMessage = when {
                         name.isBlank() -> "资产名称不能为空"
-                        parsedCurrent == null -> "请输入正确的当前价值"
-                        parsedPurchase == null -> "请输入正确的买入成本"
+                        parsedPurchase == null -> "请输入正确的原价"
                         parsedDate == null -> "买入日期格式需要是 YYYY-MM-DD"
                         else -> null
                     }
@@ -766,8 +757,8 @@ private fun AssetEditorScreen(
                             name = name,
                             category = AssetCategory.valueOf(selectedCategory),
                             description = description,
-                            currentValue = parsedCurrent ?: 0.0,
                             purchaseValue = parsedPurchase ?: 0.0,
+                            isRetired = isRetired,
                             purchaseDate = parsedDate ?: System.currentTimeMillis(),
                             currency = currency,
                             imageUrl = imageUrl,
@@ -788,6 +779,25 @@ private fun AssetEditorScreen(
                 }
                 Text(if (assetId == null) "保存资产" else "保存修改")
             }
+        }
+    }
+}
+
+@Composable
+private fun StatusSelector(isRetired: Boolean, onStatusChanged: (Boolean) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("使用状态", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = !isRetired,
+                onClick = { onStatusChanged(false) },
+                label = { Text("使用中") }
+            )
+            FilterChip(
+                selected = isRetired,
+                onClick = { onStatusChanged(true) },
+                label = { Text("已退役") }
+            )
         }
     }
 }
@@ -858,15 +868,6 @@ private fun categoryIcon(category: AssetCategory) = when (category) {
     AssetCategory.PHYSICAL -> Icons.Rounded.Inventory2
     AssetCategory.NFT -> Icons.Rounded.AutoAwesome
     AssetCategory.CRYPTO -> Icons.Rounded.CurrencyBitcoin
-}
-
-@Composable
-private fun gainColor(value: Double): Color {
-    return when {
-        value > 0 -> TelegramPositive
-        value < 0 -> TelegramNegative
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
