@@ -3,6 +3,7 @@ package com.storix.app.ui
 import java.text.NumberFormat
 import java.time.Instant
 import java.time.LocalDate
+import java.time.Period
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Currency
@@ -18,11 +19,6 @@ object Formatters {
             formatter.currency = Currency.getInstance(currencyCode.uppercase(Locale.ROOT))
         }
         return formatter.format(amount)
-    }
-
-    fun formatSignedCurrency(amount: Double, currencyCode: String): String {
-        val prefix = if (amount > 0) "+" else ""
-        return prefix + formatCurrency(amount, currencyCode)
     }
 
     fun formatDate(epochMillis: Long): String {
@@ -49,18 +45,20 @@ object Formatters {
         }
     }
 
-    fun formatHoldingDays(days: Long): String {
-        return if (days >= 365) {
-            val years = days / 365
-            val remain = days % 365
-            "${years}年 ${remain}天"
+    fun formatHoldingPeriod(startEpochMillis: Long, endEpochMillis: Long = System.currentTimeMillis()): String {
+        val startDate = Instant.ofEpochMilli(startEpochMillis).atZone(zoneId).toLocalDate()
+        val endDate = Instant.ofEpochMilli(endEpochMillis).atZone(zoneId).toLocalDate()
+        val normalizedPeriod = if (endDate.isBefore(startDate)) {
+            Period.ZERO
         } else {
-            "${days}天"
+            Period.between(startDate, endDate)
         }
-    }
 
-    fun formatPercent(value: Double): String {
-        val prefix = if (value > 0) "+" else ""
-        return prefix + String.format(Locale.US, "%.2f%%", value)
+        val parts = buildList {
+            if (normalizedPeriod.years > 0) add("${normalizedPeriod.years}年")
+            if (normalizedPeriod.months > 0) add("${normalizedPeriod.months}月")
+            if (normalizedPeriod.days > 0) add("${normalizedPeriod.days}天")
+        }
+        return if (parts.isEmpty()) "0天" else parts.joinToString("")
     }
 }

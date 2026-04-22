@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AssetDao {
-    @Query("SELECT * FROM assets ORDER BY currentValue DESC, updatedAt DESC")
+    @Query("SELECT * FROM assets ORDER BY isRetired ASC, purchaseValue DESC, updatedAt DESC")
     fun observeAssets(): Flow<List<Asset>>
 
     @Query("SELECT * FROM assets WHERE id = :assetId LIMIT 1")
