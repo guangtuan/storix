@@ -1,11 +1,14 @@
 package com.storix.app.ui
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.storix.app.StorixApplication
 import com.storix.app.data.local.Asset
 import com.storix.app.data.local.AssetCategory
+import java.io.File
+import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -56,6 +59,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         notes: String
     ) {
         val now = System.currentTimeMillis()
+        val finalImageUrl = persistImageIfNeeded(
+            imageUrl = imageUrl,
+            existingImageUrl = existingAsset?.imageUrl
+        )
+
+        if (existingAsset?.imageUrl != finalImageUrl) {
+            deleteLocalImageIfManaged(existingAsset?.imageUrl)
+        }
+
         repository.upsert(
             Asset(
                 id = existingAsset?.id ?: 0,
@@ -67,7 +79,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 isRetired = isRetired,
                 purchaseDate = purchaseDate,
                 currency = currency.trim().uppercase().ifBlank { "CNY" },
-                imageUrl = imageUrl?.trim()?.ifBlank { null },
+                imageUrl = finalImageUrl,
                 location = location.trim(),
                 notes = notes.trim(),
                 createdAt = existingAsset?.createdAt ?: now,
@@ -78,5 +90,48 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     suspend fun deleteAsset(asset: Asset) {
         repository.delete(asset)
+        deleteLocalImageIfManaged(asset.imageUrl)
+    }
+
+    private fun persistImageIfNeeded(imageUrl: String?, existingImageUrl: String?): String? {
+        val normalizedImageUrl = imageUrl?.trim()?.ifBlank { null } ?: return null
+        if (!normalizedImageUrl.startsWith("content://")) {
+            return normalizedImageUrl
+        }
+        if (normalizedImageUrl == existingImageUrl) {
+            return existingImageUrl
+        }
+
+        val app = getApplication<Application>()
+        val imagesDir = File(app.filesDir, IMAGE_DIRECTORY).apply { mkdirs() }
+        val targetFile = File(imagesDir, "${UUID.randomUUID()}.jpg")
+
+        app.contentResolver.openInputStream(Uri.parse(normalizedImageUrl))?.use { input ->
+            targetFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        } ?: return existingImageUrl
+
+        return Uri.fromFile(targetFile).toString()
+    }
+
+    private fun deleteLocalImageIfManaged(imageUrl: String?) {
+        val normalizedImageUrl = imageUrl?.trim()?.ifBlank { null } ?: return
+        val uri = Uri.parse(normalizedImageUrl)
+        if (uri.scheme != "file") {
+            return
+        }
+
+        val app = getApplication<Application>()
+        val imageDirectory = File(app.filesDir, IMAGE_DIRECTORY).canonicalFile
+        val imagePath = uri.path ?: return
+        val imageFile = File(imagePath).canonicalFile
+        if (imageFile.parentFile == imageDirectory && imageFile.exists()) {
+            imageFile.delete()
+        }
+    }
+
+    private companion object {
+        const val IMAGE_DIRECTORY = "asset-images"
     }
 }

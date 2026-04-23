@@ -1,5 +1,8 @@
 package com.storix.app.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
@@ -35,6 +38,7 @@ import androidx.compose.material.icons.rounded.ImageSearch
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
@@ -559,6 +563,14 @@ private fun AssetEditorScreen(
     var searchingImage by remember(assetId) { mutableStateOf(false) }
     var saving by remember(assetId) { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            imageUrl = uri.toString()
+            errorMessage = null
+        }
+    }
 
     LaunchedEffect(existingAsset?.id) {
         val asset = existingAsset ?: return@LaunchedEffect
@@ -595,7 +607,7 @@ private fun AssetEditorScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "记录名称、原价、使用状态和买入时间，还可以试着从公开接口查找图片。",
+                text = "记录名称、原价、使用状态和买入时间，也可以从本地相册或公开接口补一张图片。",
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
@@ -681,12 +693,24 @@ private fun AssetEditorScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("公开图片", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text("资产图片", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Text(
-                        text = "输入名称后尝试从公开可访问接口里找一张对应图片，适合实物、项目名或常见 NFT 系列。",
+                        text = "可以直接从本地相册选择，也可以输入名称后从公开可访问接口里找图，适合实物、项目名或常见 NFT 系列。",
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedButton(
+                            onClick = {
+                                imagePicker.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Rounded.PhotoLibrary, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("从相册选择")
+                        }
                         OutlinedButton(
                             onClick = {
                                 if (name.isBlank()) {
@@ -705,7 +729,8 @@ private fun AssetEditorScreen(
                                     searchingImage = false
                                 }
                             },
-                            enabled = !searchingImage
+                            enabled = !searchingImage,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             if (searchingImage) {
                                 CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
