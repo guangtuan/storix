@@ -352,23 +352,29 @@ private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit)
                     fontWeight = FontWeight.SemiBold,
                     color = accent.contentColor
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    AssetMetaTag(
-                        text = asset.category.displayName,
-                        containerColor = accent.containerColor,
-                        contentColor = accent.contentColor
-                    )
-                    AssetMetaTag(
-                        text = if (asset.isRetired) "已归档" else "陪伴中",
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (isFeatured) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    item {
                         AssetMetaTag(
-                            text = "陪伴最久",
-                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                            contentColor = MaterialTheme.colorScheme.primary
+                            text = asset.category.displayName,
+                            containerColor = accent.containerColor,
+                            contentColor = accent.contentColor
                         )
+                    }
+                    item {
+                        AssetMetaTag(
+                            text = if (asset.isRetired) "已归档" else "陪伴中",
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    if (isFeatured) {
+                        item {
+                            AssetMetaTag(
+                                text = "陪伴最久",
+                                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                contentColor = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
                 Text(
