@@ -5,6 +5,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -93,6 +95,7 @@ import kotlinx.coroutines.launch
 private const val HomeRoute = "home"
 private const val DetailRoute = "detail"
 private const val EditRoute = "edit"
+private const val FeaturedAssetBackgroundAlpha = 0.2f
 
 private fun detailRoute(assetId: Long): String = "$DetailRoute/$assetId"
 private fun editRoute(assetId: Long): String = "$EditRoute/$assetId"
@@ -235,7 +238,7 @@ private fun SummaryCard(uiState: HomeUiState) {
                         SummaryMetric(
                             title = title,
                             value = value,
-                            modifier = Modifier.width(132.dp)
+                            modifier = Modifier.widthIn(min = 112.dp, max = 172.dp)
                         )
                     }
                 }
@@ -314,7 +317,11 @@ private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isFeatured) accent.containerColor.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface
+            containerColor = if (isFeatured) {
+                accent.containerColor.copy(alpha = FeaturedAssetBackgroundAlpha)
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
         )
     ) {
         Row(
@@ -352,29 +359,26 @@ private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit)
                     fontWeight = FontWeight.SemiBold,
                     color = accent.contentColor
                 )
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    item {
-                        AssetMetaTag(
-                            text = asset.category.displayName,
-                            containerColor = accent.containerColor,
-                            contentColor = accent.contentColor
-                        )
-                    }
-                    item {
-                        AssetMetaTag(
-                            text = if (asset.isRetired) "已归档" else "陪伴中",
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    AssetMetaTag(
+                        text = asset.category.displayName,
+                        containerColor = accent.containerColor,
+                        contentColor = accent.contentColor
+                    )
+                    AssetMetaTag(
+                        text = if (asset.isRetired) "已归档" else "陪伴中",
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     if (isFeatured) {
-                        item {
-                            AssetMetaTag(
-                                text = "陪伴最久",
-                                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                                contentColor = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                        AssetMetaTag(
+                            text = "陪伴最久",
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
                 Text(
