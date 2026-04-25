@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,7 +24,9 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -35,13 +39,17 @@ import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.CurrencyBitcoin
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.HomeWork
 import androidx.compose.material.icons.rounded.ImageSearch
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.PhotoLibrary
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -70,11 +78,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -91,22 +101,39 @@ import coil.compose.AsyncImage
 import com.storix.app.data.local.Asset
 import com.storix.app.data.local.AssetCategory
 import com.storix.app.ui.theme.StorixGreenLight
+import com.storix.app.ui.theme.ThemePreset
+import java.time.Instant
+import java.time.ZoneId
 import kotlinx.coroutines.launch
 
 private const val HomeRoute = "home"
 private const val DetailRoute = "detail"
 private const val EditRoute = "edit"
 private const val FeaturedTagAlpha = 0.12f
-private val SummaryMetricMinWidth = 112.dp
-private val SummaryMetricMaxWidth = 172.dp
+private val SummaryMetricMinWidth = 104.dp
+private val SummaryMetricMaxWidth = 160.dp
+
+private enum class MainTab(
+    val label: String,
+    val icon: ImageVector
+) {
+    HOME(label = "首页", icon = Icons.Rounded.Home),
+    TIMELINE(label = "时间轴", icon = Icons.Rounded.Schedule),
+    SETTINGS(label = "设置", icon = Icons.Rounded.Settings)
+}
 
 private data class SummaryMetricItem(val title: String, val value: String)
+private data class TimelineYearGroup(val year: Int, val assets: List<Asset>)
 
 private fun detailRoute(assetId: Long): String = "$DetailRoute/$assetId"
 private fun editRoute(assetId: Long): String = "$EditRoute/$assetId"
 
 @Composable
-fun StorixApp(viewModel: MainViewModel) {
+fun StorixApp(
+    viewModel: MainViewModel,
+    selectedThemePreset: ThemePreset,
+    onThemePresetChange: (ThemePreset) -> Unit
+) {
     val navController = rememberNavController()
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -115,7 +142,9 @@ fun StorixApp(viewModel: MainViewModel) {
                 HomeScreen(
                     viewModel = viewModel,
                     onAddAsset = { navController.navigate(EditRoute) },
-                    onOpenAsset = { navController.navigate(detailRoute(it)) }
+                    onOpenAsset = { navController.navigate(detailRoute(it)) },
+                    selectedThemePreset = selectedThemePreset,
+                    onThemePresetChange = onThemePresetChange
                 )
             }
             composable(
@@ -157,51 +186,338 @@ fun StorixApp(viewModel: MainViewModel) {
 private fun HomeScreen(
     viewModel: MainViewModel,
     onAddAsset: () -> Unit,
-    onOpenAsset: (Long) -> Unit
+    onOpenAsset: (Long) -> Unit,
+    selectedThemePreset: ThemePreset,
+    onThemePresetChange: (ThemePreset) -> Unit
 ) {
     val uiState by viewModel.homeUiState.collectAsState()
+    var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
 
     Scaffold(
         topBar = {
             TelegramTopBar(title = "Storix", subtitle = "我的收藏")
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddAsset,
-                modifier = Modifier
-                    .padding(end = 10.dp, bottom = 10.dp)
-                    .size(52.dp),
-                shape = RoundedCornerShape(16.dp),
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(Icons.Rounded.Add, contentDescription = null)
+            if (selectedTab == MainTab.HOME) {
+                FloatingActionButton(
+                    onClick = onAddAsset,
+                    modifier = Modifier
+                        .padding(end = 10.dp, bottom = 10.dp)
+                        .size(52.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Rounded.Add, contentDescription = null)
+                }
             }
+        },
+        bottomBar = {
+            MainBottomBar(selectedTab = selectedTab, onSelected = { selectedTab = it })
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(start = 12.dp, top = 10.dp, end = 12.dp, bottom = 96.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item {
-                SummaryCard(uiState = uiState)
-            }
+        when (selectedTab) {
+            MainTab.HOME -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 96.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    item {
+                        SummaryCard(uiState = uiState)
+                    }
 
-            if (uiState.assets.isEmpty()) {
-                item {
-                    EmptyStateCard(onAddAsset = onAddAsset)
+                    if (uiState.assets.isEmpty()) {
+                        item {
+                            EmptyStateCard(onAddAsset = onAddAsset)
+                        }
+                    } else {
+                        items(uiState.assets, key = { asset -> asset.id }) { asset ->
+                            AssetRowCard(
+                                asset = asset,
+                                isFeatured = uiState.longestCompanionAsset?.id == asset.id && !asset.isRetired,
+                                onClick = { onOpenAsset(asset.id) }
+                            )
+                        }
+                    }
                 }
-            } else {
-                items(uiState.assets, key = { asset -> asset.id }) { asset ->
-                    AssetRowCard(
-                        asset = asset,
-                        isFeatured = uiState.longestCompanionAsset?.id == asset.id && !asset.isRetired,
-                        onClick = { onOpenAsset(asset.id) }
+            }
+            MainTab.TIMELINE -> {
+                TimelineContent(
+                    assets = uiState.assets,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    onOpenAsset = onOpenAsset
+                )
+            }
+            MainTab.SETTINGS -> {
+                ThemeSettingsContent(
+                    selectedThemePreset = selectedThemePreset,
+                    onThemePresetChange = onThemePresetChange,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MainBottomBar(selectedTab: MainTab, onSelected: (MainTab) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.78f))
+            .padding(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        MainTab.values().forEach { tab ->
+            val selected = selectedTab == tab
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(
+                        if (selected) {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.24f)
+                        } else {
+                            Color.Transparent
+                        }
                     )
+                    .clickable { onSelected(tab) }
+                    .padding(vertical = 10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Icon(
+                    imageVector = tab.icon,
+                    contentDescription = tab.label,
+                    tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = tab.label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThemeSettingsContent(
+    selectedThemePreset: ThemePreset,
+    onThemePresetChange: (ThemePreset) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val themeRows = remember { ThemePreset.entries.toList().chunked(2) }
+
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(start = 12.dp, top = 10.dp, end = 12.dp, bottom = 88.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Palette,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "主题色",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Text(
+                        text = "选择你喜欢的界面主题色，立即生效。",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    themeRows.forEach { row ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            row.forEach { preset ->
+                                FilterChip(
+                                    selected = selectedThemePreset == preset,
+                                    onClick = { onThemePresetChange(preset) },
+                                    modifier = Modifier.weight(1f),
+                                    label = { Text(preset.displayName) },
+                                    leadingIcon = {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(12.dp)
+                                                .clip(CircleShape)
+                                                .background(preset.swatch)
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimelineContent(assets: List<Asset>, modifier: Modifier = Modifier, onOpenAsset: (Long) -> Unit) {
+    val groupedTimeline = remember(assets) {
+        val zoneId = ZoneId.systemDefault()
+        assets
+            .sortedByDescending { it.purchaseDate }
+            .groupBy {
+                Instant.ofEpochMilli(it.purchaseDate)
+                    .atZone(zoneId)
+                    .year
+            }
+            .toSortedMap(compareByDescending { it })
+            .map { (year, yearlyAssets) ->
+                TimelineYearGroup(
+                    year = year,
+                    assets = yearlyAssets.sortedByDescending { it.purchaseDate }
+                )
+            }
+    }
+
+    if (groupedTimeline.isEmpty()) {
+        Box(modifier = modifier.padding(12.dp), contentAlignment = Alignment.Center) {
+            Text("还没有可展示的时间轴", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        return
+    }
+
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(start = 12.dp, top = 10.dp, end = 12.dp, bottom = 88.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        groupedTimeline.forEach { group ->
+            item(key = "timeline-year-${group.year}") {
+                TimelineYearHeader(year = group.year, count = group.assets.size)
+            }
+            itemsIndexed(group.assets, key = { _, asset -> asset.id }) { index, asset ->
+                TimelineItem(
+                    asset = asset,
+                    showConnector = index < group.assets.lastIndex,
+                    onClick = { onOpenAsset(asset.id) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimelineYearHeader(year: Int, count: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp, bottom = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "${year}年",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = "$count 条",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun TimelineItem(asset: Asset, showConnector: Boolean, onClick: () -> Unit) {
+    val accent = categoryAccent(asset.category)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(top = 14.dp)
+                .width(18.dp)
+                .fillMaxHeight(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(accent.contentColor)
+            )
+            if (showConnector) {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .width(2.dp)
+                        .weight(1f)
+                        .background(MaterialTheme.colorScheme.outlineVariant)
+                )
+            }
+        }
+
+        OutlinedCard(
+            modifier = Modifier
+                .weight(1f)
+                .clickable(onClick = onClick),
+            shape = RoundedCornerShape(14.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = Formatters.formatDate(asset.purchaseDate),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = accent.contentColor,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = asset.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "购入 ${Formatters.formatCurrency(asset.purchaseValue, asset.currency)} · 已陪伴 ${Formatters.formatHoldingPeriod(asset.purchaseDate)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
@@ -213,10 +529,10 @@ private fun SummaryCard(uiState: HomeUiState) {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 text = "总购入金额",
                 style = MaterialTheme.typography.labelMedium,
@@ -248,12 +564,12 @@ private fun SummaryCard(uiState: HomeUiState) {
 private fun SummaryMetric(title: String, value: String, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f)
         )
     ) {
-        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelMedium,
@@ -263,7 +579,7 @@ private fun SummaryMetric(title: String, value: String, modifier: Modifier = Mod
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onPrimary,
                 maxLines = 2,
@@ -276,7 +592,7 @@ private fun SummaryMetric(title: String, value: String, modifier: Modifier = Mod
 @Composable
 private fun EmptyStateCard(onAddAsset: () -> Unit) {
     Card(
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
@@ -297,7 +613,7 @@ private fun EmptyStateCard(onAddAsset: () -> Unit) {
                 text = "添加一件物品开始记录，记下购入金额、买入日期和陪伴时光。",
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Button(onClick = onAddAsset, shape = RoundedCornerShape(14.dp)) {
+            Button(onClick = onAddAsset, shape = RoundedCornerShape(10.dp)) {
                 Text("现在添加")
             }
         }
@@ -312,21 +628,21 @@ private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit)
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(14.dp),
         border = if (isFeatured) BorderStroke(1.dp, accent.contentColor.copy(alpha = 0.22f)) else null,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(9.dp),
             verticalAlignment = Alignment.Top
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(8.dp))
                     .background(accent.containerColor),
                 contentAlignment = Alignment.Center
             ) {
@@ -336,7 +652,7 @@ private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit)
                     tint = accent.contentColor
                 )
             }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = asset.name,
                     style = MaterialTheme.typography.titleMedium,
@@ -345,25 +661,35 @@ private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit)
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Text(
-                    text = "已陪伴 ${Formatters.formatHoldingPeriod(asset.purchaseDate)}",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = accent.contentColor
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        AssetMetaTag(
-                            text = asset.category.displayName,
-                            containerColor = accent.containerColor,
-                            contentColor = accent.contentColor
-                        )
-                        AssetMetaTag(
-                            text = if (asset.isRetired) "已归档" else "陪伴中",
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "已陪伴 ${Formatters.formatHoldingPeriod(asset.purchaseDate)}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = accent.contentColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = "购入 ${Formatters.formatCurrency(asset.purchaseValue, asset.currency)}",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    AssetMetaTag(
+                        text = asset.category.displayName,
+                        containerColor = accent.containerColor,
+                        contentColor = accent.contentColor
+                    )
+                    AssetMetaTag(
+                        text = if (asset.isRetired) "已归档" else "陪伴中",
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     if (isFeatured) {
                         AssetMetaTag(
                             text = "陪伴最久",
@@ -372,11 +698,6 @@ private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit)
                         )
                     }
                 }
-                Text(
-                    text = "购入价 ${Formatters.formatCurrency(asset.purchaseValue, asset.currency)}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
         }
     }
@@ -386,9 +707,9 @@ private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit)
 private fun AssetMetaTag(text: String, containerColor: Color, contentColor: Color) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(7.dp))
             .background(containerColor)
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .padding(horizontal = 6.dp, vertical = 2.dp)
     ) {
         Text(
             text = text,
@@ -413,6 +734,28 @@ private fun DetailScreen(
     val asset by assetFlow.collectAsState(initial = null)
     var showDeleteDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            val targetAsset = asset ?: return@rememberLauncherForActivityResult
+            scope.launch {
+                viewModel.saveAsset(
+                    existingAsset = targetAsset,
+                    name = targetAsset.name,
+                    category = targetAsset.category,
+                    description = targetAsset.description,
+                    purchaseValue = targetAsset.purchaseValue,
+                    isRetired = targetAsset.isRetired,
+                    purchaseDate = targetAsset.purchaseDate,
+                    currency = targetAsset.currency,
+                    imageUrl = uri.toString(),
+                    location = targetAsset.location,
+                    notes = targetAsset.notes
+                )
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -452,11 +795,20 @@ private fun DetailScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item {
-                    AssetImageCard(imageUrl = currentAsset.imageUrl, category = currentAsset.category)
+                    AssetImageCard(
+                        imageUrl = currentAsset.imageUrl,
+                        category = currentAsset.category,
+                        onClick = {
+                            imagePicker.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        placeholderHint = "点击这里上传图片"
+                    )
                 }
                 item {
                     Card(
-                        shape = RoundedCornerShape(18.dp),
+                        shape = RoundedCornerShape(14.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         Column(
@@ -492,7 +844,7 @@ private fun DetailScreen(
                 if (currentAsset.location.isNotBlank() || currentAsset.notes.isNotBlank()) {
                     item {
                         Card(
-                            shape = RoundedCornerShape(18.dp),
+                            shape = RoundedCornerShape(14.dp),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                         ) {
                             Column(
@@ -555,7 +907,7 @@ private fun DetailScreen(
 @Composable
 private fun MetricSection(asset: Asset) {
     Card(
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
@@ -740,7 +1092,7 @@ private fun AssetEditorScreen(
             )
 
             Card(
-                shape = RoundedCornerShape(18.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(
@@ -852,7 +1204,7 @@ private fun AssetEditorScreen(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !saving,
-                shape = RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(10.dp)
             ) {
                 if (saving) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
@@ -903,9 +1255,19 @@ private fun CategorySelector(selected: AssetCategory, onSelected: (AssetCategory
 }
 
 @Composable
-private fun AssetImageCard(imageUrl: String?, category: AssetCategory) {
+private fun AssetImageCard(
+    imageUrl: String?,
+    category: AssetCategory,
+    onClick: (() -> Unit)? = null,
+    placeholderHint: String = "搜索结果会显示在这里"
+) {
     Card(
-        shape = RoundedCornerShape(18.dp),
+        modifier = if (onClick != null) {
+            Modifier.clickable(onClick = onClick)
+        } else {
+            Modifier
+        },
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         if (!imageUrl.isNullOrBlank()) {
@@ -915,7 +1277,7 @@ private fun AssetImageCard(imageUrl: String?, category: AssetCategory) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(220.dp)
-                    .clip(RoundedCornerShape(24.dp)),
+                    .clip(RoundedCornerShape(16.dp)),
                 contentScale = ContentScale.Crop
             )
         } else {
@@ -936,7 +1298,7 @@ private fun AssetImageCard(imageUrl: String?, category: AssetCategory) {
                 Spacer(modifier = Modifier.height(10.dp))
                 Text("还没有图片", fontWeight = FontWeight.SemiBold)
                 Text(
-                    text = "搜索结果会显示在这里",
+                    text = placeholderHint,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
