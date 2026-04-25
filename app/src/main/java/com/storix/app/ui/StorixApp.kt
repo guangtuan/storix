@@ -5,11 +5,12 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -96,6 +97,8 @@ private const val HomeRoute = "home"
 private const val DetailRoute = "detail"
 private const val EditRoute = "edit"
 private const val FeaturedAssetBackgroundAlpha = 0.2f
+private val SummaryMetricMinWidth = 112.dp
+private val SummaryMetricMaxWidth = 172.dp
 
 private fun detailRoute(assetId: Long): String = "$DetailRoute/$assetId"
 private fun editRoute(assetId: Long): String = "$EditRoute/$assetId"
@@ -238,7 +241,7 @@ private fun SummaryCard(uiState: HomeUiState) {
                         SummaryMetric(
                             title = title,
                             value = value,
-                            modifier = Modifier.widthIn(min = 112.dp, max = 172.dp)
+                            modifier = Modifier.widthIn(min = SummaryMetricMinWidth, max = SummaryMetricMaxWidth)
                         )
                     }
                 }
@@ -307,6 +310,7 @@ private fun EmptyStateCard(onAddAsset: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit) {
     val accent = categoryAccent(asset.category)
@@ -359,9 +363,9 @@ private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit)
                     fontWeight = FontWeight.SemiBold,
                     color = accent.contentColor
                 )
-                Row(
-                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     AssetMetaTag(
                         text = asset.category.displayName,
@@ -977,7 +981,7 @@ private fun categoryAccent(category: AssetCategory) = when (category) {
     )
     AssetCategory.CRYPTO -> CategoryAccent(
         containerColor = Color(0xFFFFF1D6),
-        contentColor = Color(0xFFB06B00)
+        contentColor = Color(0xFF7A4A00)
     )
 }
 
