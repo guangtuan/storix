@@ -96,8 +96,11 @@ import kotlinx.coroutines.launch
 private const val HomeRoute = "home"
 private const val DetailRoute = "detail"
 private const val EditRoute = "edit"
+private const val FeaturedTagAlpha = 0.12f
 private val SummaryMetricMinWidth = 112.dp
 private val SummaryMetricMaxWidth = 172.dp
+
+private data class SummaryMetricItem(val title: String, val value: String)
 
 private fun detailRoute(assetId: Long): String = "$DetailRoute/$assetId"
 private fun editRoute(assetId: Long): String = "$EditRoute/$assetId"
@@ -206,16 +209,7 @@ private fun HomeScreen(
 
 @Composable
 private fun SummaryCard(uiState: HomeUiState) {
-    val metrics = buildList {
-        add("正在陪伴" to "${uiState.activeAssetCount} 件")
-        add("已归档" to "${uiState.retiredAssetCount} 件")
-        uiState.longestCompanionAsset?.let {
-            add("陪伴最久 · ${Formatters.formatHoldingPeriod(it.purchaseDate)}" to it.name)
-        }
-        uiState.newestAsset?.let {
-            add("最新加入" to it.name)
-        }
-    }
+    val metrics = buildSummaryMetrics(uiState)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -234,18 +228,16 @@ private fun SummaryCard(uiState: HomeUiState) {
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimary
             )
-            if (metrics.isNotEmpty()) {
-                LazyRow(
-                    modifier = Modifier.semantics { contentDescription = "摘要统计列表" },
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(metrics) { (title, value) ->
-                        SummaryMetric(
-                            title = title,
-                            value = value,
-                            modifier = Modifier.widthIn(min = SummaryMetricMinWidth, max = SummaryMetricMaxWidth)
-                        )
-                    }
+            LazyRow(
+                modifier = Modifier.semantics { contentDescription = "摘要统计列表" },
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(metrics) { metric ->
+                    SummaryMetric(
+                        title = metric.title,
+                        value = metric.value,
+                        modifier = Modifier.widthIn(min = SummaryMetricMinWidth, max = SummaryMetricMaxWidth)
+                    )
                 }
             }
         }
@@ -375,7 +367,7 @@ private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit)
                     if (isFeatured) {
                         AssetMetaTag(
                             text = "陪伴最久",
-                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = FeaturedTagAlpha),
                             contentColor = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -978,6 +970,24 @@ private fun categoryAccent(category: AssetCategory) = when (category) {
         containerColor = Color(0xFFFFF1D6),
         contentColor = Color(0xFF7A4A00)
     )
+}
+
+private fun buildSummaryMetrics(uiState: HomeUiState): List<SummaryMetricItem> {
+    return buildList {
+        add(SummaryMetricItem(title = "正在陪伴", value = "${uiState.activeAssetCount} 件"))
+        add(SummaryMetricItem(title = "已归档", value = "${uiState.retiredAssetCount} 件"))
+        uiState.longestCompanionAsset?.let {
+            add(
+                SummaryMetricItem(
+                    title = "陪伴最久",
+                    value = Formatters.formatHoldingPeriod(it.purchaseDate)
+                )
+            )
+        }
+        uiState.newestAsset?.let {
+            add(SummaryMetricItem(title = "最新加入", value = it.name))
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
