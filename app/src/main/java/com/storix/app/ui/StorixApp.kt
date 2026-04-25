@@ -85,7 +85,7 @@ import androidx.navigation.navArgument
 import coil.compose.AsyncImage
 import com.storix.app.data.local.Asset
 import com.storix.app.data.local.AssetCategory
-import com.storix.app.ui.theme.TelegramBlueLight
+import com.storix.app.ui.theme.StorixGreenLight
 import kotlinx.coroutines.launch
 
 private const val HomeRoute = "home"
@@ -153,7 +153,7 @@ private fun HomeScreen(
 
     Scaffold(
         topBar = {
-            TelegramTopBar(title = "Storix", subtitle = "资产总览")
+            TelegramTopBar(title = "Storix", subtitle = "我的收藏")
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -198,7 +198,7 @@ private fun SummaryCard(uiState: HomeUiState) {
     ) {
         Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
-                text = "资产原价",
+                text = "总购入金额",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.78f)
             )
@@ -210,21 +210,30 @@ private fun SummaryCard(uiState: HomeUiState) {
             )
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 SummaryMetric(
-                    title = "持有中",
-                    value = uiState.activeAssetCount.toString(),
+                    title = "正在陪伴",
+                    value = "${uiState.activeAssetCount} 件",
                     modifier = Modifier.weight(1f)
                 )
                 SummaryMetric(
-                    title = "已退役",
-                    value = uiState.retiredAssetCount.toString(),
+                    title = "已归档",
+                    value = "${uiState.retiredAssetCount} 件",
                     modifier = Modifier.weight(1f)
                 )
             }
-            SummaryMetric(
-                title = "持有中原价",
-                value = Formatters.formatCurrency(uiState.activeOriginalCost, "CNY"),
-                modifier = Modifier.fillMaxWidth()
-            )
+            if (uiState.longestCompanionAsset != null) {
+                SummaryMetric(
+                    title = "陪伴最久",
+                    value = "${uiState.longestCompanionAsset.name} · ${Formatters.formatHoldingPeriod(uiState.longestCompanionAsset.purchaseDate)}",
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            if (uiState.newestAsset != null) {
+                SummaryMetric(
+                    title = "最新加入",
+                    value = uiState.newestAsset.name,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }
@@ -273,9 +282,9 @@ private fun EmptyStateCard(onAddAsset: () -> Unit) {
                 modifier = Modifier.size(40.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
-            Text("还没有资产记录", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text("收藏夹还是空的", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             Text(
-                text = "先添加一条房产、实物或 NFT 资产，马上就能看到原价、状态和持有时长。",
+                text = "添加一件物品开始记录，记下购入金额、买入日期和陪伴时光。",
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Button(onClick = onAddAsset, shape = RoundedCornerShape(14.dp)) {
@@ -305,7 +314,7 @@ private fun AssetRowCard(asset: Asset, onClick: () -> Unit) {
                 modifier = Modifier
                     .size(46.dp)
                     .clip(RoundedCornerShape(23.dp))
-                    .background(TelegramBlueLight),
+                    .background(StorixGreenLight),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -314,31 +323,33 @@ private fun AssetRowCard(asset: Asset, onClick: () -> Unit) {
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(asset.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 Text(
                     text = buildString {
                         append(asset.category.displayName)
-                        append(" · ")
-                        if (asset.isRetired) {
-                            append("已退役 · ")
-                        }
-                        append("已持有 ")
-                        append(Formatters.formatHoldingPeriod(asset.purchaseDate))
+                        if (asset.isRetired) append(" · 已归档")
                     },
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Text(
+                    text = "陪伴了 ${Formatters.formatHoldingPeriod(asset.purchaseDate)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = Formatters.formatCurrency(asset.purchaseValue, asset.currency),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "原价",
-                    style = MaterialTheme.typography.bodySmall
+                    text = "购入",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -361,7 +372,7 @@ private fun DetailScreen(
     Scaffold(
         topBar = {
             TelegramTopBar(
-                title = asset?.name ?: "资产详情",
+                title = asset?.name ?: "物品详情",
                 subtitle = asset?.category?.displayName ?: "",
                 onBack = onBack,
                 actions = {
@@ -385,7 +396,7 @@ private fun DetailScreen(
                     .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
-                Text("未找到这条资产记录")
+                Text("未找到这条记录")
             }
         } else {
             LazyColumn(
@@ -471,7 +482,7 @@ private fun DetailScreen(
     if (showDeleteDialog && asset != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("删除资产") },
+            title = { Text("删除收藏") },
             text = { Text("删除后这条记录会从本地列表中移除。") },
             confirmButton = {
                 TextButton(
@@ -508,11 +519,11 @@ private fun MetricSection(asset: Asset) {
                 .padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("核心指标", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            DetailLine(Icons.Rounded.Info, "原价", Formatters.formatCurrency(asset.purchaseValue, asset.currency))
-            DetailLine(Icons.Rounded.Info, "使用状态", if (asset.isRetired) "已退役" else "使用中")
+            Text("记录信息", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            DetailLine(Icons.Rounded.Info, "购入金额", Formatters.formatCurrency(asset.purchaseValue, asset.currency))
+            DetailLine(Icons.Rounded.Info, "当前状态", if (asset.isRetired) "已归档" else "正在陪伴")
             DetailLine(Icons.Rounded.CalendarMonth, "买入日期", Formatters.formatDate(asset.purchaseDate))
-            DetailLine(Icons.Rounded.CalendarMonth, "持有时长", Formatters.formatHoldingPeriod(asset.purchaseDate))
+            DetailLine(Icons.Rounded.CalendarMonth, "陪伴时长", Formatters.formatHoldingPeriod(asset.purchaseDate))
         }
     }
 }
@@ -592,8 +603,8 @@ private fun AssetEditorScreen(
     Scaffold(
         topBar = {
             TelegramTopBar(
-                title = if (assetId == null) "新增资产" else "编辑资产",
-                subtitle = "像 Telegram 一样简洁填写信息",
+                title = if (assetId == null) "新增收藏" else "编辑收藏",
+                subtitle = "记录你拥有过的每一件物品",
                 onBack = onBack
             )
         }
@@ -607,7 +618,7 @@ private fun AssetEditorScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "记录名称、原价、使用状态和买入时间，也可以从本地相册或公开接口补一张图片。",
+                text = "记录物品名称、购入金额和买入时间，也可以从本地相册或公开接口补一张图片。",
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
@@ -615,7 +626,7 @@ private fun AssetEditorScreen(
                 value = name,
                 onValueChange = { name = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("资产名称") },
+                label = { Text("物品名称") },
                 placeholder = { Text("例如：深圳公寓、LABUBU、某件收藏品") },
                 singleLine = true
             )
@@ -643,7 +654,7 @@ private fun AssetEditorScreen(
                     value = purchaseValue,
                     onValueChange = { purchaseValue = it },
                     modifier = Modifier.weight(1f),
-                    label = { Text("原价") },
+                    label = { Text("购入金额") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true
                 )
@@ -693,7 +704,7 @@ private fun AssetEditorScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("资产图片", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Text("物品图片", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Text(
                         text = "可以直接从本地相册选择，也可以输入名称后从公开可访问接口里找图，适合实物、项目名或常见 NFT 系列。",
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -714,7 +725,7 @@ private fun AssetEditorScreen(
                         OutlinedButton(
                             onClick = {
                                 if (name.isBlank()) {
-                                    errorMessage = "请先输入资产名称"
+                                    errorMessage = "请先输入物品名称"
                                     return@OutlinedButton
                                 }
                                 scope.launch {
@@ -765,8 +776,8 @@ private fun AssetEditorScreen(
                     val parsedDate = Formatters.parseDate(purchaseDate)
 
                     errorMessage = when {
-                        name.isBlank() -> "资产名称不能为空"
-                        parsedPurchase == null -> "请输入正确的原价"
+                        name.isBlank() -> "物品名称不能为空"
+                        parsedPurchase == null -> "请输入正确的购入金额"
                         parsedDate == null -> "买入日期格式需要是 YYYY-MM-DD"
                         else -> null
                     }
@@ -802,7 +813,7 @@ private fun AssetEditorScreen(
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text(if (assetId == null) "保存资产" else "保存修改")
+                Text(if (assetId == null) "保存收藏" else "保存修改")
             }
         }
     }
@@ -811,17 +822,17 @@ private fun AssetEditorScreen(
 @Composable
 private fun StatusSelector(isRetired: Boolean, onStatusChanged: (Boolean) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("使用状态", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        Text("当前状态", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(
                 selected = !isRetired,
                 onClick = { onStatusChanged(false) },
-                label = { Text("使用中") }
+                label = { Text("正在陪伴") }
             )
             FilterChip(
                 selected = isRetired,
                 onClick = { onStatusChanged(true) },
-                label = { Text("已退役") }
+                label = { Text("已归档") }
             )
         }
     }
@@ -830,7 +841,7 @@ private fun StatusSelector(isRetired: Boolean, onStatusChanged: (Boolean) -> Uni
 @Composable
 private fun CategorySelector(selected: AssetCategory, onSelected: (AssetCategory) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("资产类型", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        Text("物品类型", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(AssetCategory.entries) { category ->
                 FilterChip(
