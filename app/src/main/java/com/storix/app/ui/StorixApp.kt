@@ -5,12 +5,10 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,7 +21,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -193,7 +190,7 @@ private fun HomeScreen(
                     EmptyStateCard(onAddAsset = onAddAsset)
                 }
             } else {
-                itemsIndexed(uiState.assets, key = { _, asset -> asset.id }) { _, asset ->
+                items(uiState.assets, key = { asset -> asset.id }) { asset ->
                     AssetRowCard(
                         asset = asset,
                         isFeatured = uiState.longestCompanionAsset?.id == asset.id && !asset.isRetired,
@@ -310,7 +307,6 @@ private fun EmptyStateCard(onAddAsset: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit) {
     val accent = categoryAccent(asset.category)
@@ -363,20 +359,19 @@ private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit)
                     fontWeight = FontWeight.SemiBold,
                     color = accent.contentColor
                 )
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    AssetMetaTag(
-                        text = asset.category.displayName,
-                        containerColor = accent.containerColor,
-                        contentColor = accent.contentColor
-                    )
-                    AssetMetaTag(
-                        text = if (asset.isRetired) "已归档" else "陪伴中",
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        AssetMetaTag(
+                            text = asset.category.displayName,
+                            containerColor = accent.containerColor,
+                            contentColor = accent.contentColor
+                        )
+                        AssetMetaTag(
+                            text = if (asset.isRetired) "已归档" else "陪伴中",
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     if (isFeatured) {
                         AssetMetaTag(
                             text = "陪伴最久",
