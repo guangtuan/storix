@@ -30,6 +30,7 @@ import androidx.compose.material.icons.automirrored.rounded.Notes
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.CurrencyBitcoin
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Edit
@@ -176,12 +177,26 @@ private fun HomeScreen(
                 SummaryCard(uiState = uiState)
             }
 
-            if (uiState.assets.isEmpty()) {
+            item {
+                SearchAndFilterBar(
+                    searchQuery = uiState.searchQuery,
+                    selectedCategory = uiState.categoryFilter,
+                    onSearchQueryChange = { viewModel.setSearchQuery(it) },
+                    onCategorySelected = { viewModel.setCategoryFilter(it) }
+                )
+            }
+
+            val displayedAssets = uiState.filteredAssets
+            if (uiState.allAssets.isEmpty()) {
                 item {
                     EmptyStateCard(onAddAsset = onAddAsset)
                 }
+            } else if (displayedAssets.isEmpty()) {
+                item {
+                    NoResultsCard()
+                }
             } else {
-                items(uiState.assets, key = { it.id }) { asset ->
+                items(displayedAssets, key = { it.id }) { asset ->
                     AssetRowCard(asset = asset, onClick = { onOpenAsset(asset.id) })
                 }
             }
@@ -281,6 +296,82 @@ private fun EmptyStateCard(onAddAsset: () -> Unit) {
             Button(onClick = onAddAsset, shape = RoundedCornerShape(14.dp)) {
                 Text("现在添加")
             }
+        }
+    }
+}
+
+@Composable
+private fun SearchAndFilterBar(
+    searchQuery: String,
+    selectedCategory: AssetCategory?,
+    onSearchQueryChange: (String) -> Unit,
+    onCategorySelected: (AssetCategory?) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = onSearchQueryChange,
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("搜索资产名称") },
+            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { onSearchQueryChange("") }) {
+                        Icon(Icons.Rounded.Close, contentDescription = "清除搜索")
+                    }
+                }
+            },
+            singleLine = true,
+            shape = RoundedCornerShape(16.dp)
+        )
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            item {
+                FilterChip(
+                    selected = selectedCategory == null,
+                    onClick = { onCategorySelected(null) },
+                    label = { Text("全部") }
+                )
+            }
+            items(AssetCategory.entries) { category ->
+                FilterChip(
+                    selected = selectedCategory == category,
+                    onClick = {
+                        onCategorySelected(if (selectedCategory == category) null else category)
+                    },
+                    label = { Text(category.displayName) },
+                    leadingIcon = {
+                        Icon(categoryIcon(category), contentDescription = null)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NoResultsCard() {
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Search,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Text("没有找到匹配的资产", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                text = "换个关键词或者调整类型筛选试试。",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

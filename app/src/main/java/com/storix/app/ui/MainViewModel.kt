@@ -10,13 +10,32 @@ import com.storix.app.data.local.AssetCategory
 import java.io.File
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 data class HomeUiState(
-    val assets: List<Asset> = emptyList()
+    val assets: List<Asset> = emptyList(),
+    val searchQuery: String = "",
+    val categoryFilter: AssetCategory? = null
 ) {
+    val allAssets: List<Asset> get() = assets
+
+    val filteredAssets: List<Asset>
+        get() {
+            var result = assets
+            if (searchQuery.isNotBlank()) {
+                val q = searchQuery.trim().lowercase()
+                result = result.filter { it.name.lowercase().contains(q) }
+            }
+            if (categoryFilter != null) {
+                result = result.filter { it.category == categoryFilter }
+            }
+            return result
+        }
+
     val activeAssetCount: Int
         get() = assets.count { !it.isRetired }
 
@@ -33,13 +52,28 @@ data class HomeUiState(
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = (application as StorixApplication).container.assetRepository
 
-    val homeUiState = repository.observeAssets()
-        .map(::HomeUiState)
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = HomeUiState()
-        )
+    private val searchQuery = MutableStateFlow("")
+    private val categoryFilter = MutableStateFlow<AssetCategory?>(null)
+
+    val homeUiState = combine(
+        repository.observeAssets().map(::HomeUiState),
+        searchQuery,
+        categoryFilter
+    ) { state, query, filter ->
+        state.copy(searchQuery = query, categoryFilter = filter)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = HomeUiState()
+    )
+
+    fun setSearchQuery(query: String) {
+        searchQuery.value = query
+    }
+
+    fun setCategoryFilter(category: AssetCategory?) {
+        categoryFilter.value = category
+    }
 
     fun observeAsset(assetId: Long): Flow<Asset?> = repository.observeAsset(assetId)
 
