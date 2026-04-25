@@ -4,6 +4,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
@@ -77,6 +78,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
@@ -93,7 +96,6 @@ import kotlinx.coroutines.launch
 private const val HomeRoute = "home"
 private const val DetailRoute = "detail"
 private const val EditRoute = "edit"
-private const val FeaturedAssetBackgroundAlpha = 0.2f
 private val SummaryMetricMinWidth = 112.dp
 private val SummaryMetricMaxWidth = 172.dp
 
@@ -164,7 +166,7 @@ private fun HomeScreen(
             FloatingActionButton(
                 onClick = onAddAsset,
                 modifier = Modifier
-                    .padding(end = 2.dp, bottom = 10.dp)
+                    .padding(end = 10.dp, bottom = 10.dp)
                     .size(52.dp),
                 shape = RoundedCornerShape(16.dp),
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -208,7 +210,7 @@ private fun SummaryCard(uiState: HomeUiState) {
         add("正在陪伴" to "${uiState.activeAssetCount} 件")
         add("已归档" to "${uiState.retiredAssetCount} 件")
         uiState.longestCompanionAsset?.let {
-            add("陪伴最久" to "${it.name} · ${Formatters.formatHoldingPeriod(it.purchaseDate)}")
+            add("陪伴最久 · ${Formatters.formatHoldingPeriod(it.purchaseDate)}" to it.name)
         }
         uiState.newestAsset?.let {
             add("最新加入" to it.name)
@@ -233,7 +235,10 @@ private fun SummaryCard(uiState: HomeUiState) {
                 color = MaterialTheme.colorScheme.onPrimary
             )
             if (metrics.isNotEmpty()) {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyRow(
+                    modifier = Modifier.semantics { contentDescription = "摘要统计列表" },
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     items(metrics) { (title, value) ->
                         SummaryMetric(
                             title = title,
@@ -316,13 +321,8 @@ private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit)
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isFeatured) {
-                accent.containerColor.copy(alpha = FeaturedAssetBackgroundAlpha)
-            } else {
-                MaterialTheme.colorScheme.surface
-            }
-        )
+        border = if (isFeatured) BorderStroke(1.dp, accent.contentColor.copy(alpha = 0.22f)) else null,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier
