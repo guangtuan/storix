@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -76,6 +77,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -158,6 +160,10 @@ private fun HomeScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddAsset,
+                modifier = Modifier
+                    .padding(end = 2.dp, bottom = 10.dp)
+                    .size(52.dp),
+                shape = RoundedCornerShape(16.dp),
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
@@ -169,8 +175,8 @@ private fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            contentPadding = PaddingValues(start = 12.dp, top = 10.dp, end = 12.dp, bottom = 96.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
                 SummaryCard(uiState = uiState)
@@ -181,8 +187,12 @@ private fun HomeScreen(
                     EmptyStateCard(onAddAsset = onAddAsset)
                 }
             } else {
-                items(uiState.assets, key = { it.id }) { asset ->
-                    AssetRowCard(asset = asset, onClick = { onOpenAsset(asset.id) })
+                itemsIndexed(uiState.assets, key = { _, asset -> asset.id }) { _, asset ->
+                    AssetRowCard(
+                        asset = asset,
+                        isFeatured = uiState.longestCompanionAsset?.id == asset.id && !asset.isRetired,
+                        onClick = { onOpenAsset(asset.id) }
+                    )
                 }
             }
         }
@@ -191,48 +201,44 @@ private fun HomeScreen(
 
 @Composable
 private fun SummaryCard(uiState: HomeUiState) {
+    val metrics = buildList {
+        add("正在陪伴" to "${uiState.activeAssetCount} 件")
+        add("已归档" to "${uiState.retiredAssetCount} 件")
+        uiState.longestCompanionAsset?.let {
+            add("陪伴最久" to "${it.name} · ${Formatters.formatHoldingPeriod(it.purchaseDate)}")
+        }
+        uiState.newestAsset?.let {
+            add("最新加入" to it.name)
+        }
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
     ) {
-        Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
                 text = "总购入金额",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.78f)
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.74f)
             )
             Text(
                 text = Formatters.formatCurrency(uiState.totalOriginalCost, "CNY"),
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimary
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                SummaryMetric(
-                    title = "正在陪伴",
-                    value = "${uiState.activeAssetCount} 件",
-                    modifier = Modifier.weight(1f)
-                )
-                SummaryMetric(
-                    title = "已归档",
-                    value = "${uiState.retiredAssetCount} 件",
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            if (uiState.longestCompanionAsset != null) {
-                SummaryMetric(
-                    title = "陪伴最久",
-                    value = "${uiState.longestCompanionAsset.name} · ${Formatters.formatHoldingPeriod(uiState.longestCompanionAsset.purchaseDate)}",
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-            if (uiState.newestAsset != null) {
-                SummaryMetric(
-                    title = "最新加入",
-                    value = uiState.newestAsset.name,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            if (metrics.isNotEmpty()) {
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(metrics) { (title, value) ->
+                        SummaryMetric(
+                            title = title,
+                            value = value,
+                            modifier = Modifier.width(132.dp)
+                        )
+                    }
+                }
             }
         }
     }
@@ -242,22 +248,26 @@ private fun SummaryCard(uiState: HomeUiState) {
 private fun SummaryMetric(title: String, value: String, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f)
+            containerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f)
         )
     ) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.72f)
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onPrimary
+                color = MaterialTheme.colorScheme.onPrimary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -295,64 +305,98 @@ private fun EmptyStateCard(onAddAsset: () -> Unit) {
 }
 
 @Composable
-private fun AssetRowCard(asset: Asset, onClick: () -> Unit) {
+private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit) {
+    val accent = categoryAccent(asset.category)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(
+            containerColor = if (isFeatured) accent.containerColor.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface
+        )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+                .padding(horizontal = 14.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             Box(
                 modifier = Modifier
-                    .size(46.dp)
-                    .clip(RoundedCornerShape(23.dp))
-                    .background(StorixGreenLight),
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(accent.containerColor),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = categoryIcon(asset.category),
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = accent.contentColor
                 )
             }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(asset.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = buildString {
-                        append(asset.category.displayName)
-                        if (asset.isRetired) append(" · 已归档")
-                    },
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = asset.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "陪伴了 ${Formatters.formatHoldingPeriod(asset.purchaseDate)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary
+                    text = "已陪伴 ${Formatters.formatHoldingPeriod(asset.purchaseDate)}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = accent.contentColor
                 )
-            }
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    AssetMetaTag(
+                        text = asset.category.displayName,
+                        containerColor = accent.containerColor,
+                        contentColor = accent.contentColor
+                    )
+                    AssetMetaTag(
+                        text = if (asset.isRetired) "已归档" else "陪伴中",
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (isFeatured) {
+                        AssetMetaTag(
+                            text = "陪伴最久",
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                            contentColor = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
                 Text(
-                    text = Formatters.formatCurrency(asset.purchaseValue, asset.currency),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "购入",
-                    style = MaterialTheme.typography.labelSmall,
+                    text = "购入价 ${Formatters.formatCurrency(asset.purchaseValue, asset.currency)}",
+                    style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun AssetMetaTag(text: String, containerColor: Color, contentColor: Color) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(containerColor)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = contentColor,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -904,6 +948,27 @@ private fun categoryIcon(category: AssetCategory) = when (category) {
     AssetCategory.PHYSICAL -> Icons.Rounded.Inventory2
     AssetCategory.NFT -> Icons.Rounded.AutoAwesome
     AssetCategory.CRYPTO -> Icons.Rounded.CurrencyBitcoin
+}
+
+private data class CategoryAccent(val containerColor: Color, val contentColor: Color)
+
+private fun categoryAccent(category: AssetCategory) = when (category) {
+    AssetCategory.REAL_ESTATE -> CategoryAccent(
+        containerColor = Color(0xFFE7F0FF),
+        contentColor = Color(0xFF2D5DB3)
+    )
+    AssetCategory.PHYSICAL -> CategoryAccent(
+        containerColor = StorixGreenLight,
+        contentColor = Color(0xFF3D5F52)
+    )
+    AssetCategory.NFT -> CategoryAccent(
+        containerColor = Color(0xFFF6E9FF),
+        contentColor = Color(0xFF8650C7)
+    )
+    AssetCategory.CRYPTO -> CategoryAccent(
+        containerColor = Color(0xFFFFF1D6),
+        contentColor = Color(0xFFB06B00)
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
