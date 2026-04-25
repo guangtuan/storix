@@ -11,31 +11,31 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColors = darkColorScheme(
-    primary = TelegramBlue,
-    secondary = TelegramBlueDark,
-    tertiary = TelegramBlueLight,
-    background = TelegramBackgroundDark,
-    surface = TelegramSurfaceDark,
-    surfaceVariant = Color(0xFF2B3A4A),
+    primary = StorixGreen,
+    secondary = StorixGreenDark,
+    tertiary = StorixGreenLight,
+    background = StorixCreamDark,
+    surface = StorixSurfaceDark,
+    surfaceVariant = Color(0xFF2A3030),
     onPrimary = Color.White,
     onSecondary = Color.White,
-    onBackground = Color(0xFFF5F7FA),
-    onSurface = Color(0xFFF5F7FA),
-    onSurfaceVariant = Color(0xFFA6B3C2)
+    onBackground = Color(0xFFF5F2EE),
+    onSurface = Color(0xFFF5F2EE),
+    onSurfaceVariant = Color(0xFFA6B3AB)
 )
 
 private val LightColors = lightColorScheme(
-    primary = TelegramBlue,
-    secondary = TelegramBlueDark,
-    tertiary = TelegramBlueLight,
-    background = TelegramBackground,
-    surface = TelegramSurface,
-    surfaceVariant = Color(0xFFE8EDF2),
+    primary = StorixGreen,
+    secondary = StorixGreenDark,
+    tertiary = StorixGreenLight,
+    background = StorixCream,
+    surface = StorixSurface,
+    surfaceVariant = Color(0xFFE5EDE9),
     onPrimary = Color.White,
     onSecondary = Color.White,
-    onBackground = TelegramText,
-    onSurface = TelegramText,
-    onSurfaceVariant = TelegramSubtext
+    onBackground = StorixText,
+    onSurface = StorixText,
+    onSurfaceVariant = StorixSubtext
 )
 
 @Composable

@@ -28,6 +28,14 @@ data class HomeUiState(
 
     val activeOriginalCost: Double
         get() = assets.filterNot { it.isRetired }.sumOf { it.purchaseValue }
+
+    /** The active asset that has accompanied the user the longest (earliest purchase date). */
+    val longestCompanionAsset: Asset?
+        get() = assets.filterNot { it.isRetired }.minByOrNull { it.purchaseDate }
+
+    /** The most recently added asset (latest purchase date). */
+    val newestAsset: Asset?
+        get() = assets.maxByOrNull { it.purchaseDate }
 }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
