@@ -148,28 +148,40 @@ private fun lightColors(tones: ThemeTones) = lightColorScheme(
     primary = tones.primary,
     secondary = tones.secondary,
     tertiary = tones.tertiary,
+    primaryContainer = tones.tertiary,
+    secondaryContainer = tones.lightSurfaceVariant,
     background = tones.lightBackground,
     surface = tones.lightSurface,
     surfaceVariant = tones.lightSurfaceVariant,
     onPrimary = Color.White,
     onSecondary = Color.White,
+    onPrimaryContainer = Color(0xFF1C2120),
+    onSecondaryContainer = Color(0xFF1C2120),
     onBackground = Color(0xFF1C2120),
     onSurface = Color(0xFF1C2120),
-    onSurfaceVariant = tones.lightOnSurfaceVariant
+    onSurfaceVariant = tones.lightOnSurfaceVariant,
+    outline = tones.lightOnSurfaceVariant.copy(alpha = 0.34f),
+    outlineVariant = tones.lightSurfaceVariant
 )
 
 private fun darkColors(tones: ThemeTones) = darkColorScheme(
     primary = tones.primary,
     secondary = tones.secondary,
     tertiary = tones.tertiary,
+    primaryContainer = tones.darkSurfaceVariant,
+    secondaryContainer = tones.darkSurface,
     background = tones.darkBackground,
     surface = tones.darkSurface,
     surfaceVariant = tones.darkSurfaceVariant,
     onPrimary = Color.White,
     onSecondary = Color.White,
+    onPrimaryContainer = Color(0xFFF3F5F4),
+    onSecondaryContainer = Color(0xFFF3F5F4),
     onBackground = Color(0xFFF3F5F4),
     onSurface = Color(0xFFF3F5F4),
-    onSurfaceVariant = tones.darkOnSurfaceVariant
+    onSurfaceVariant = tones.darkOnSurfaceVariant,
+    outline = tones.darkOnSurfaceVariant.copy(alpha = 0.4f),
+    outlineVariant = tones.darkSurfaceVariant
 )
 
 @Composable

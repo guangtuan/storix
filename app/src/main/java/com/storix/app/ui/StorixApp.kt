@@ -5,6 +5,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
@@ -240,12 +241,20 @@ private fun HomeScreen(
                             EmptyStateCard(onAddAsset = onAddAsset)
                         }
                     } else {
-                        items(uiState.assets, key = { asset -> asset.id }) { asset ->
-                            AssetRowCard(
-                                asset = asset,
-                                isFeatured = uiState.longestCompanionAsset?.id == asset.id && !asset.isRetired,
-                                onClick = { onOpenAsset(asset.id) }
-                            )
+                        items(uiState.assets.chunked(2), key = { row -> row.first().id }) { row ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                row.forEach { asset ->
+                                    AssetGridCard(
+                                        asset = asset,
+                                        isFeatured = uiState.longestCompanionAsset?.id == asset.id && !asset.isRetired,
+                                        onClick = { onOpenAsset(asset.id) },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                                if (row.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
                         }
                     }
                 }
@@ -283,7 +292,12 @@ private fun MainBottomBar(selectedTab: MainTab, onSelected: (MainTab) -> Unit) {
             .fillMaxWidth()
             .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.78f))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.96f))
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.9f),
+                shape = RoundedCornerShape(20.dp)
+            )
             .padding(6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -295,7 +309,7 @@ private fun MainBottomBar(selectedTab: MainTab, onSelected: (MainTab) -> Unit) {
                     .clip(RoundedCornerShape(14.dp))
                     .background(
                         if (selected) {
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.24f)
+                            MaterialTheme.colorScheme.primaryContainer
                         } else {
                             Color.Transparent
                         }
@@ -934,8 +948,8 @@ private fun TimelineItem(asset: Asset, member: Member?, showConnector: Boolean, 
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = Formatters.formatDate(asset.purchaseDate),
-                        style = MaterialTheme.typography.labelMedium,
+                        text = Formatters.formatMonthDay(asset.purchaseDate),
+                        style = MaterialTheme.typography.titleSmall,
                         color = accent.contentColor,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -945,11 +959,12 @@ private fun TimelineItem(asset: Asset, member: Member?, showConnector: Boolean, 
                     ) {
                         MemberAvatar(
                             member = member,
-                            size = 24.dp
+                            size = 28.dp
                         )
                         Text(
                             text = member?.name ?: "默认成员",
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -1026,19 +1041,20 @@ private fun SummaryCard(uiState: HomeUiState) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f))
     ) {
         Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 text = "总购入金额",
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.74f)
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f)
             )
             Text(
                 text = Formatters.formatCurrency(uiState.totalOriginalCost, "CNY"),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimary
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
             LazyRow(
                 modifier = Modifier.semantics { contentDescription = "摘要统计列表" },
@@ -1062,14 +1078,15 @@ private fun SummaryMetric(title: String, value: String, modifier: Modifier = Mod
         modifier = modifier,
         shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f)
-        )
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f)
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
     ) {
         Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.68f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -1077,7 +1094,7 @@ private fun SummaryMetric(title: String, value: String, modifier: Modifier = Mod
                 text = value,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -1089,7 +1106,8 @@ private fun SummaryMetric(title: String, value: String, modifier: Modifier = Mod
 private fun EmptyStateCard(onAddAsset: () -> Unit) {
     Card(
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f))
     ) {
         Column(
             modifier = Modifier
@@ -1117,38 +1135,56 @@ private fun EmptyStateCard(onAddAsset: () -> Unit) {
 }
 
 @Composable
-private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit) {
+private fun AssetGridCard(
+    asset: Asset,
+    isFeatured: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val accent = categoryAccent(asset.category)
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
         border = if (isFeatured) BorderStroke(1.dp, accent.contentColor.copy(alpha = 0.22f)) else null,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(9.dp),
-            verticalAlignment = Alignment.Top
+                .height(176.dp)
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(accent.containerColor),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = categoryIcon(asset.category),
-                    contentDescription = null,
-                    tint = accent.contentColor
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(accent.containerColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = categoryIcon(asset.category),
+                        contentDescription = null,
+                        tint = accent.contentColor
+                    )
+                }
+                AssetMetaTag(
+                    text = if (asset.isRetired) "已归档" else "陪伴中",
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
                 Text(
                     text = asset.name,
                     style = MaterialTheme.typography.titleMedium,
@@ -1157,42 +1193,34 @@ private fun AssetRowCard(asset: Asset, isFeatured: Boolean, onClick: () -> Unit)
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "已陪伴 ${Formatters.formatHoldingPeriod(asset.purchaseDate)}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = accent.contentColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(
-                        text = "购入 ${Formatters.formatCurrency(asset.purchaseValue, asset.currency)}",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text(
+                    text = "已陪伴 ${Formatters.formatHoldingPeriod(asset.purchaseDate)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = accent.contentColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "购入 ${Formatters.formatCurrency(asset.purchaseValue, asset.currency)}",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.CenterVertically) {
+                AssetMetaTag(
+                    text = asset.category.displayName,
+                    containerColor = accent.containerColor,
+                    contentColor = accent.contentColor
+                )
+                if (isFeatured) {
                     AssetMetaTag(
-                        text = asset.category.displayName,
-                        containerColor = accent.containerColor,
-                        contentColor = accent.contentColor
+                        text = "陪伴最久",
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = FeaturedTagAlpha),
+                        contentColor = MaterialTheme.colorScheme.primary
                     )
-                    AssetMetaTag(
-                        text = if (asset.isRetired) "已归档" else "陪伴中",
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (isFeatured) {
-                        AssetMetaTag(
-                            text = "陪伴最久",
-                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = FeaturedTagAlpha),
-                            contentColor = MaterialTheme.colorScheme.primary
-                        )
-                    }
                 }
             }
         }
@@ -1916,10 +1944,10 @@ private fun TelegramTopBar(
 ) {
     CenterAlignedTopAppBar(
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            titleContentColor = MaterialTheme.colorScheme.onPrimary,
-            navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-            actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+            containerColor = MaterialTheme.colorScheme.background,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            navigationIconContentColor = MaterialTheme.colorScheme.primary,
+            actionIconContentColor = MaterialTheme.colorScheme.primary
         ),
         navigationIcon = {
             if (onBack != null) {
@@ -1935,7 +1963,7 @@ private fun TelegramTopBar(
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }

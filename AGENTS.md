@@ -18,6 +18,8 @@
 - `./gradlew connectedDebugAndroidTest`: Run instrumentation tests on a connected device/emulator.
 - `./dev_deploy.sh --dry-run --dest user@host:/path/`: Preview APK upload command.
 
+After each change, build a fresh debug APK with `./gradlew assembleDebug` and deploy it with `./dev_deploy.sh`.
+
 ## Coding Style & Naming Conventions
 - Follow Kotlin defaults: 4-space indentation, no tabs.
 - Class/file names use `PascalCase` (for example, `AssetRepository.kt`, `MainViewModel.kt`).

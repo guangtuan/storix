@@ -23,12 +23,12 @@ class MainActivity : ComponentActivity() {
             var selectedTheme by remember {
                 mutableStateOf(
                     ThemePreset.entries.firstOrNull {
-                        it.name == preferences.getString(THEME_KEY, ThemePreset.MANJARO.name)
-                    } ?: ThemePreset.MANJARO
+                        it.name == preferences.getString(THEME_KEY, ThemePreset.MINT.name)
+                    } ?: ThemePreset.MINT
                 )
             }
 
-            StorixTheme(themePreset = selectedTheme) {
+            StorixTheme(darkTheme = false, themePreset = selectedTheme) {
                 StorixApp(
                     viewModel = viewModel(),
                     selectedThemePreset = selectedTheme,

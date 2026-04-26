@@ -12,6 +12,7 @@ import java.util.Locale
 object Formatters {
     private val zoneId: ZoneId = ZoneId.systemDefault()
     private val dateFormatter: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
+    private val monthDayFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("M月d日")
 
     fun formatCurrency(amount: Double, currencyCode: String): String {
         val formatter = NumberFormat.getCurrencyInstance(Locale.SIMPLIFIED_CHINESE)
@@ -26,6 +27,13 @@ object Formatters {
             .atZone(zoneId)
             .toLocalDate()
             .format(dateFormatter)
+    }
+
+    fun formatMonthDay(epochMillis: Long): String {
+        return Instant.ofEpochMilli(epochMillis)
+            .atZone(zoneId)
+            .toLocalDate()
+            .format(monthDayFormatter)
     }
 
     fun parseDate(value: String): Long? {
