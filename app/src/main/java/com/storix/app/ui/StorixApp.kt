@@ -52,10 +52,17 @@ import androidx.compose.material.icons.rounded.People
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.Storage
+import androidx.compose.material.icons.rounded.TabletAndroid
+import androidx.compose.material.icons.rounded.Computer
+import androidx.compose.material.icons.rounded.DesktopWindows
+import androidx.compose.material.icons.rounded.Keyboard
+import androidx.compose.material.icons.rounded.Chair
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -117,8 +124,8 @@ private const val HomeRoute = "home"
 private const val DetailRoute = "detail"
 private const val EditRoute = "edit"
 private const val FeaturedTagAlpha = 0.12f
-private val SummaryMetricMinWidth = 104.dp
-private val SummaryMetricMaxWidth = 160.dp
+private val SummaryMetricMinWidth = 98.dp
+private val SummaryMetricMaxWidth = 148.dp
 
 private enum class MainTab(
     val label: String,
@@ -229,8 +236,8 @@ private fun HomeScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
-                    contentPadding = PaddingValues(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 96.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    contentPadding = PaddingValues(start = 10.dp, top = 6.dp, end = 10.dp, bottom = 92.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     item {
                         SummaryCard(uiState = uiState)
@@ -242,7 +249,7 @@ private fun HomeScreen(
                         }
                     } else {
                         items(uiState.assets.chunked(2), key = { row -> row.first().id }) { row ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 row.forEach { asset ->
                                     AssetGridCard(
                                         asset = asset,
@@ -1044,15 +1051,15 @@ private fun SummaryCard(uiState: HomeUiState) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f))
     ) {
-        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
             Text(
                 text = "总购入金额",
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.72f)
             )
             Text(
                 text = Formatters.formatCurrency(uiState.totalOriginalCost, "CNY"),
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
@@ -1082,17 +1089,17 @@ private fun SummaryMetric(title: String, value: String, modifier: Modifier = Mod
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
     ) {
-        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 9.dp, vertical = 7.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.68f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 maxLines = 2,
@@ -1153,9 +1160,9 @@ private fun AssetGridCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(176.dp)
-                .padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .height(164.dp)
+                .padding(horizontal = 10.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1164,8 +1171,8 @@ private fun AssetGridCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                        .size(34.dp)
+                        .clip(RoundedCornerShape(9.dp))
                         .background(accent.containerColor),
                     contentAlignment = Alignment.Center
                 ) {
@@ -1183,11 +1190,11 @@ private fun AssetGridCard(
             }
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
                 Text(
                     text = asset.name,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
@@ -1195,7 +1202,7 @@ private fun AssetGridCard(
                 )
                 Text(
                     text = "已陪伴 ${Formatters.formatHoldingPeriod(asset.purchaseDate)}",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.SemiBold,
                     color = accent.contentColor,
                     maxLines = 1,
@@ -1203,7 +1210,7 @@ private fun AssetGridCard(
                 )
                 Text(
                     text = "购入 ${Formatters.formatCurrency(asset.purchaseValue, asset.currency)}",
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -1233,7 +1240,7 @@ private fun AssetMetaTag(text: String, containerColor: Color, contentColor: Colo
         modifier = Modifier
             .clip(RoundedCornerShape(7.dp))
             .background(containerColor)
-            .padding(horizontal = 6.dp, vertical = 2.dp)
+            .padding(horizontal = 6.dp, vertical = 1.dp)
     ) {
         Text(
             text = text,
@@ -1890,6 +1897,14 @@ private fun AssetImageCard(
 
 private fun categoryIcon(category: AssetCategory) = when (category) {
     AssetCategory.REAL_ESTATE -> Icons.Rounded.HomeWork
+    AssetCategory.PHONE -> Icons.Rounded.PhoneAndroid
+    AssetCategory.LAPTOP -> Icons.Rounded.Computer
+    AssetCategory.DESKTOP -> Icons.Rounded.DesktopWindows
+    AssetCategory.TABLET -> Icons.Rounded.TabletAndroid
+    AssetCategory.MONITOR -> Icons.Rounded.DesktopWindows
+    AssetCategory.KEYBOARD -> Icons.Rounded.Keyboard
+    AssetCategory.STORAGE -> Icons.Rounded.Storage
+    AssetCategory.FURNITURE -> Icons.Rounded.Chair
     AssetCategory.PHYSICAL -> Icons.Rounded.Inventory2
     AssetCategory.NFT -> Icons.Rounded.AutoAwesome
     AssetCategory.CRYPTO -> Icons.Rounded.CurrencyBitcoin
@@ -1901,6 +1916,38 @@ private fun categoryAccent(category: AssetCategory) = when (category) {
     AssetCategory.REAL_ESTATE -> CategoryAccent(
         containerColor = Color(0xFFE7F0FF),
         contentColor = Color(0xFF2D5DB3)
+    )
+    AssetCategory.PHONE -> CategoryAccent(
+        containerColor = Color(0xFFE6F3FF),
+        contentColor = Color(0xFF236A94)
+    )
+    AssetCategory.LAPTOP -> CategoryAccent(
+        containerColor = Color(0xFFEAF4F0),
+        contentColor = Color(0xFF2F6B59)
+    )
+    AssetCategory.DESKTOP -> CategoryAccent(
+        containerColor = Color(0xFFE8EEF9),
+        contentColor = Color(0xFF3C5A91)
+    )
+    AssetCategory.TABLET -> CategoryAccent(
+        containerColor = Color(0xFFEEF0FF),
+        contentColor = Color(0xFF5A5AC9)
+    )
+    AssetCategory.MONITOR -> CategoryAccent(
+        containerColor = Color(0xFFEAF7F7),
+        contentColor = Color(0xFF2C6F73)
+    )
+    AssetCategory.KEYBOARD -> CategoryAccent(
+        containerColor = Color(0xFFF3ECFF),
+        contentColor = Color(0xFF7550B2)
+    )
+    AssetCategory.STORAGE -> CategoryAccent(
+        containerColor = Color(0xFFFFF1E4),
+        contentColor = Color(0xFF9A5A17)
+    )
+    AssetCategory.FURNITURE -> CategoryAccent(
+        containerColor = Color(0xFFF6EEDD),
+        contentColor = Color(0xFF8B6332)
     )
     AssetCategory.PHYSICAL -> CategoryAccent(
         containerColor = StorixGreenLight,
