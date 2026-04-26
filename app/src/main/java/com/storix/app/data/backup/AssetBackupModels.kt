@@ -2,11 +2,23 @@ package com.storix.app.data.backup
 
 import com.storix.app.data.local.Asset
 import com.storix.app.data.local.AssetCategory
+import com.storix.app.data.local.Member
 
 data class AssetBackupFile(
     val version: Int,
     val exportedAt: Long,
+    val members: List<MemberBackupItem>? = null,
     val assets: List<AssetBackupItem>
+)
+
+data class MemberBackupItem(
+    val id: Long,
+    val name: String,
+    val avatarUrl: String?,
+    val isDefault: Boolean,
+    val createdAt: Long,
+    val updatedAt: Long,
+    val embeddedAvatar: EmbeddedImage?
 )
 
 data class AssetBackupItem(
@@ -20,6 +32,7 @@ data class AssetBackupItem(
     val currency: String,
     val purchaseDate: Long,
     val imageUrl: String?,
+    val memberId: Long?,
     val location: String,
     val notes: String,
     val createdAt: Long,
@@ -45,6 +58,7 @@ fun Asset.toBackupItem(embeddedImage: EmbeddedImage?): AssetBackupItem {
         currency = currency,
         purchaseDate = purchaseDate,
         imageUrl = imageUrl,
+        memberId = memberId,
         location = location,
         notes = notes,
         createdAt = createdAt,
@@ -65,8 +79,32 @@ fun AssetBackupItem.toAsset(imageUrlOverride: String?): Asset {
         currency = currency,
         purchaseDate = purchaseDate,
         imageUrl = imageUrlOverride ?: imageUrl,
+        memberId = memberId,
         location = location,
         notes = notes,
+        createdAt = createdAt,
+        updatedAt = updatedAt
+    )
+}
+
+fun Member.toBackupItem(embeddedAvatar: EmbeddedImage?): MemberBackupItem {
+    return MemberBackupItem(
+        id = id,
+        name = name,
+        avatarUrl = avatarUrl,
+        isDefault = isDefault,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        embeddedAvatar = embeddedAvatar
+    )
+}
+
+fun MemberBackupItem.toMember(avatarUrlOverride: String?): Member {
+    return Member(
+        id = id,
+        name = name,
+        avatarUrl = avatarUrlOverride ?: avatarUrl,
+        isDefault = isDefault,
         createdAt = createdAt,
         updatedAt = updatedAt
     )

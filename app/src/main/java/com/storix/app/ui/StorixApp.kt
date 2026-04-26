@@ -47,11 +47,14 @@ import androidx.compose.material.icons.rounded.ImageSearch
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Inventory2
 import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.material.icons.rounded.People
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -102,6 +105,7 @@ import androidx.navigation.navArgument
 import coil.compose.AsyncImage
 import com.storix.app.data.local.Asset
 import com.storix.app.data.local.AssetCategory
+import com.storix.app.data.local.Member
 import com.storix.app.ui.theme.StorixGreenLight
 import com.storix.app.ui.theme.ThemePreset
 import java.time.Instant
@@ -249,6 +253,8 @@ private fun HomeScreen(
             MainTab.TIMELINE -> {
                 TimelineContent(
                     assets = uiState.assets,
+                    members = uiState.members,
+                    defaultMember = uiState.defaultMember,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
@@ -258,6 +264,7 @@ private fun HomeScreen(
             MainTab.SETTINGS -> {
                 ThemeSettingsContent(
                     viewModel = viewModel,
+                    members = uiState.members,
                     selectedThemePreset = selectedThemePreset,
                     onThemePresetChange = onThemePresetChange,
                     modifier = Modifier
@@ -317,6 +324,7 @@ private fun MainBottomBar(selectedTab: MainTab, onSelected: (MainTab) -> Unit) {
 @Composable
 private fun ThemeSettingsContent(
     viewModel: MainViewModel,
+    members: List<Member>,
     selectedThemePreset: ThemePreset,
     onThemePresetChange: (ThemePreset) -> Unit,
     modifier: Modifier = Modifier
@@ -326,6 +334,22 @@ private fun ThemeSettingsContent(
     var isTransferringData by rememberSaveable { mutableStateOf(false) }
     var transferResultMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var showImportConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    var memberActionMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    var showMemberDialog by rememberSaveable { mutableStateOf(false) }
+    var editingMemberId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var memberNameInput by rememberSaveable { mutableStateOf("") }
+    var memberAvatarInput by rememberSaveable { mutableStateOf("") }
+    var memberErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    var savingMember by rememberSaveable { mutableStateOf(false) }
+
+    val memberAvatarPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            memberAvatarInput = uri.toString()
+            memberErrorMessage = null
+        }
+    }
 
     val exportLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
@@ -409,6 +433,160 @@ private fun ThemeSettingsContent(
                                 )
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.People,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "成员管理",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                editingMemberId = null
+                                memberNameInput = ""
+                                memberAvatarInput = ""
+                                memberErrorMessage = null
+                                showMemberDialog = true
+                            }
+                        ) {
+                            Icon(Icons.Rounded.Add, contentDescription = null)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("新增")
+                        }
+                    }
+
+                    Text(
+                        text = "默认成员用于承接未指定成员的历史物品。",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    if (members.isEmpty()) {
+                        Text(
+                            text = "暂无成员，系统会自动创建默认成员。",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        members.forEach { member ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    MemberAvatar(
+                                        member = member,
+                                        size = 34.dp
+                                    )
+                                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = member.name,
+                                                style = MaterialTheme.typography.titleSmall,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            if (member.isDefault) {
+                                                AssetMetaTag(
+                                                    text = "默认",
+                                                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
+                                                    contentColor = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
+                                        Text(
+                                            text = if (member.isDefault) "用于承接未绑定成员的物品" else "可绑定资产归属",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                                if (!member.isDefault) {
+                                    TextButton(
+                                        onClick = {
+                                            scope.launch {
+                                                viewModel.setDefaultMember(member.id)
+                                                memberActionMessage = "已设默认成员：${member.name}"
+                                            }
+                                        }
+                                    ) {
+                                        Icon(Icons.Rounded.Star, contentDescription = null)
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("设默认")
+                                    }
+                                }
+                                IconButton(
+                                    onClick = {
+                                        editingMemberId = member.id
+                                        memberNameInput = member.name
+                                        memberAvatarInput = member.avatarUrl.orEmpty()
+                                        memberErrorMessage = null
+                                        showMemberDialog = true
+                                    }
+                                ) {
+                                    Icon(Icons.Rounded.Edit, contentDescription = "编辑成员")
+                                }
+                                if (!member.isDefault) {
+                                    IconButton(
+                                        onClick = {
+                                            scope.launch {
+                                                val deleted = viewModel.deleteMember(member)
+                                                memberActionMessage = if (deleted) {
+                                                    "已删除成员：${member.name}"
+                                                } else {
+                                                    "默认成员不能删除"
+                                                }
+                                            }
+                                        }
+                                    ) {
+                                        Icon(Icons.Rounded.DeleteOutline, contentDescription = "删除成员")
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    memberActionMessage?.let { message ->
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }
@@ -529,10 +707,108 @@ private fun ThemeSettingsContent(
             }
         )
     }
+
+    if (showMemberDialog) {
+        val editingMember = members.firstOrNull { it.id == editingMemberId }
+        AlertDialog(
+            onDismissRequest = {
+                if (!savingMember) {
+                    showMemberDialog = false
+                }
+            },
+            title = { Text(if (editingMember == null) "新增成员" else "编辑成员") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = memberNameInput,
+                        onValueChange = {
+                            memberNameInput = it
+                            memberErrorMessage = null
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("成员名字") },
+                        singleLine = true
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        MemberAvatar(
+                            member = null,
+                            avatarUrlOverride = memberAvatarInput.ifBlank { null },
+                            displayNameOverride = memberNameInput.trim().ifBlank { "成员" },
+                            size = 42.dp
+                        )
+                        OutlinedButton(
+                            onClick = {
+                                memberAvatarPicker.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            }
+                        ) {
+                            Icon(Icons.Rounded.PhotoLibrary, contentDescription = null)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("从相册选择")
+                        }
+                    }
+                    memberErrorMessage?.let { error ->
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val normalizedName = memberNameInput.trim()
+                        if (normalizedName.isBlank()) {
+                            memberErrorMessage = "成员名字不能为空"
+                            return@TextButton
+                        }
+                        scope.launch {
+                            savingMember = true
+                            viewModel.saveMember(
+                                existingMember = editingMember,
+                                name = normalizedName,
+                                avatarUrl = memberAvatarInput.ifBlank { null }
+                            )
+                            memberActionMessage = if (editingMember == null) {
+                                "已新增成员：$normalizedName"
+                            } else {
+                                "已更新成员：$normalizedName"
+                            }
+                            savingMember = false
+                            showMemberDialog = false
+                        }
+                    },
+                    enabled = !savingMember
+                ) {
+                    Text(if (savingMember) "保存中..." else "保存")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showMemberDialog = false },
+                    enabled = !savingMember
+                ) {
+                    Text("取消")
+                }
+            }
+        )
+    }
 }
 
 @Composable
-private fun TimelineContent(assets: List<Asset>, modifier: Modifier = Modifier, onOpenAsset: (Long) -> Unit) {
+private fun TimelineContent(
+    assets: List<Asset>,
+    members: List<Member>,
+    defaultMember: Member?,
+    modifier: Modifier = Modifier,
+    onOpenAsset: (Long) -> Unit
+) {
     val groupedTimeline = remember(assets) {
         val zoneId = ZoneId.systemDefault()
         assets
@@ -563,6 +839,7 @@ private fun TimelineContent(assets: List<Asset>, modifier: Modifier = Modifier, 
         contentPadding = PaddingValues(start = 12.dp, top = 10.dp, end = 12.dp, bottom = 88.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
+        val memberMap = members.associateBy { it.id }
         groupedTimeline.forEach { group ->
             item(key = "timeline-year-${group.year}") {
                 TimelineYearHeader(year = group.year, count = group.assets.size)
@@ -570,6 +847,7 @@ private fun TimelineContent(assets: List<Asset>, modifier: Modifier = Modifier, 
             itemsIndexed(group.assets, key = { _, asset -> asset.id }) { index, asset ->
                 TimelineItem(
                     asset = asset,
+                    member = memberMap[asset.memberId] ?: defaultMember,
                     showConnector = index < group.assets.lastIndex,
                     onClick = { onOpenAsset(asset.id) }
                 )
@@ -602,7 +880,7 @@ private fun TimelineYearHeader(year: Int, count: Int) {
 }
 
 @Composable
-private fun TimelineItem(asset: Asset, showConnector: Boolean, onClick: () -> Unit) {
+private fun TimelineItem(asset: Asset, member: Member?, showConnector: Boolean, onClick: () -> Unit) {
     val accent = categoryAccent(asset.category)
 
     Row(
@@ -650,12 +928,32 @@ private fun TimelineItem(asset: Asset, showConnector: Boolean, onClick: () -> Un
                     .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = Formatters.formatDate(asset.purchaseDate),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = accent.contentColor,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = Formatters.formatDate(asset.purchaseDate),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = accent.contentColor,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        MemberAvatar(
+                            member = member,
+                            size = 24.dp
+                        )
+                        Text(
+                            text = member?.name ?: "默认成员",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
                 Text(
                     text = asset.name,
                     style = MaterialTheme.typography.titleMedium,
@@ -670,6 +968,53 @@ private fun TimelineItem(asset: Asset, showConnector: Boolean, onClick: () -> Un
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun MemberAvatar(
+    member: Member?,
+    size: androidx.compose.ui.unit.Dp,
+    avatarUrlOverride: String? = null,
+    displayNameOverride: String? = null
+) {
+    val avatarUrl = avatarUrlOverride ?: member?.avatarUrl
+    val displayName = displayNameOverride ?: member?.name ?: "成员"
+    val placeholder = displayName.trim().firstOrNull()?.toString() ?: "?"
+
+    if (!avatarUrl.isNullOrBlank()) {
+        AsyncImage(
+            model = avatarUrl,
+            contentDescription = displayName,
+            modifier = Modifier
+                .size(size)
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+        return
+    }
+
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        if (placeholder == "?") {
+            Icon(
+                imageVector = Icons.Rounded.Person,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            Text(
+                text = placeholder,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
@@ -901,6 +1246,7 @@ private fun DetailScreen(
                     purchaseDate = targetAsset.purchaseDate,
                     currency = targetAsset.currency,
                     imageUrl = uri.toString(),
+                    memberId = targetAsset.memberId,
                     location = targetAsset.location,
                     notes = targetAsset.notes
                 )
@@ -1106,6 +1452,8 @@ private fun AssetEditorScreen(
     } else {
         null
     }
+    val memberUiState by viewModel.memberUiState.collectAsState()
+    val defaultMemberId = memberUiState.defaultMemberId
 
     var loadedFromAsset by remember(assetId) { mutableStateOf(assetId == null) }
     var name by remember(assetId) { mutableStateOf("") }
@@ -1118,6 +1466,7 @@ private fun AssetEditorScreen(
     var notes by remember(assetId) { mutableStateOf("") }
     var imageUrl by remember(assetId) { mutableStateOf("") }
     var selectedCategory by remember(assetId) { mutableStateOf(AssetCategory.PHYSICAL.name) }
+    var selectedMemberId by remember(assetId) { mutableStateOf<Long?>(null) }
     var errorMessage by remember(assetId) { mutableStateOf<String?>(null) }
     var searchingImage by remember(assetId) { mutableStateOf(false) }
     var saving by remember(assetId) { mutableStateOf(false) }
@@ -1144,7 +1493,17 @@ private fun AssetEditorScreen(
             notes = asset.notes
             imageUrl = asset.imageUrl.orEmpty()
             selectedCategory = asset.category.name
+            selectedMemberId = asset.memberId ?: defaultMemberId
             loadedFromAsset = true
+        }
+    }
+
+    LaunchedEffect(defaultMemberId, assetId, loadedFromAsset) {
+        if (assetId == null && selectedMemberId == null) {
+            selectedMemberId = defaultMemberId
+        }
+        if (assetId != null && loadedFromAsset && selectedMemberId == null) {
+            selectedMemberId = defaultMemberId
         }
     }
 
@@ -1182,6 +1541,13 @@ private fun AssetEditorScreen(
             CategorySelector(
                 selected = AssetCategory.valueOf(selectedCategory),
                 onSelected = { selectedCategory = it.name }
+            )
+
+            MemberSelector(
+                members = memberUiState.members,
+                selectedMemberId = selectedMemberId,
+                defaultMemberId = defaultMemberId,
+                onSelected = { selectedMemberId = it }
             )
 
             StatusSelector(
@@ -1346,6 +1712,7 @@ private fun AssetEditorScreen(
                             purchaseDate = parsedDate ?: System.currentTimeMillis(),
                             currency = currency,
                             imageUrl = imageUrl,
+                            memberId = selectedMemberId ?: defaultMemberId,
                             location = location,
                             notes = notes
                         )
@@ -1362,6 +1729,42 @@ private fun AssetEditorScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                 }
                 Text(if (assetId == null) "保存收藏" else "保存修改")
+            }
+        }
+    }
+}
+
+@Composable
+private fun MemberSelector(
+    members: List<Member>,
+    selectedMemberId: Long?,
+    defaultMemberId: Long?,
+    onSelected: (Long?) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("归属成员", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+        if (members.isEmpty()) {
+            Text(
+                text = "系统会自动创建默认成员",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            return@Column
+        }
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(members, key = { it.id }) { member ->
+                val effectiveSelectedId = selectedMemberId ?: defaultMemberId
+                FilterChip(
+                    selected = effectiveSelectedId == member.id,
+                    onClick = { onSelected(member.id) },
+                    label = { Text(if (member.isDefault) "${member.name}(默认)" else member.name) },
+                    leadingIcon = {
+                        MemberAvatar(
+                            member = member,
+                            size = 20.dp
+                        )
+                    }
+                )
             }
         }
     }

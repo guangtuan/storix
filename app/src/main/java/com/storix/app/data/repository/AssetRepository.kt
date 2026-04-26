@@ -3,16 +3,21 @@ package com.storix.app.data.repository
 import android.net.Uri
 import com.storix.app.data.local.Asset
 import com.storix.app.data.local.AssetDao
+import com.storix.app.data.local.Member
+import com.storix.app.data.local.MemberDao
 import com.storix.app.data.remote.PublicImageApi
 import kotlinx.coroutines.flow.Flow
 
 class AssetRepository(
     private val assetDao: AssetDao,
+    private val memberDao: MemberDao,
     private val publicImageApi: PublicImageApi
 ) {
     fun observeAssets(): Flow<List<Asset>> = assetDao.observeAssets()
 
     fun observeAsset(assetId: Long): Flow<Asset?> = assetDao.observeAsset(assetId)
+
+    fun observeMembers(): Flow<List<Member>> = memberDao.observeMembers()
 
     suspend fun upsert(asset: Asset) {
         assetDao.upsert(asset)
@@ -29,6 +34,53 @@ class AssetRepository(
         if (assets.isNotEmpty()) {
             assetDao.upsertAll(assets)
         }
+    }
+
+    suspend fun upsertMember(member: Member) {
+        memberDao.upsert(member)
+    }
+
+    suspend fun deleteMember(member: Member) {
+        assetDao.clearMemberFromAssets(member.id)
+        memberDao.delete(member)
+    }
+
+    suspend fun getAllMembers(): List<Member> = memberDao.getAllMembers()
+
+    suspend fun replaceMembers(members: List<Member>) {
+        memberDao.clearAll()
+        if (members.isNotEmpty()) {
+            memberDao.upsertAll(members)
+        }
+    }
+
+    suspend fun ensureDefaultMember() {
+        val defaultMember = memberDao.getDefaultMember()
+        if (defaultMember != null) {
+            return
+        }
+
+        val firstMember = memberDao.getFirstMember()
+        if (firstMember == null) {
+            val now = System.currentTimeMillis()
+            memberDao.upsert(
+                Member(
+                    name = DefaultMemberName,
+                    isDefault = true,
+                    createdAt = now,
+                    updatedAt = now
+                )
+            )
+            return
+        }
+
+        memberDao.clearDefaultFlag()
+        memberDao.setDefaultById(firstMember.id)
+    }
+
+    suspend fun setDefaultMember(memberId: Long) {
+        memberDao.clearDefaultFlag()
+        memberDao.setDefaultById(memberId)
     }
 
     suspend fun searchPublicImage(query: String): String? {
@@ -67,5 +119,9 @@ class AssetRepository(
 
     private fun summaryUrl(language: String, title: String): String {
         return "https://$language.wikipedia.org/api/rest_v1/page/summary/${Uri.encode(title)}"
+    }
+
+    companion object {
+        const val DefaultMemberName = "默认成员"
     }
 }

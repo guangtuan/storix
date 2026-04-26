@@ -28,4 +28,7 @@ interface AssetDao {
 
     @Upsert
     suspend fun upsertAll(assets: List<Asset>)
+
+    @Query("UPDATE assets SET memberId = NULL WHERE memberId = :memberId")
+    suspend fun clearMemberFromAssets(memberId: Long)
 }

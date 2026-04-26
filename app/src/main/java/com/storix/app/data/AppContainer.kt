@@ -14,6 +14,28 @@ private val Migration1To2 = object : Migration(1, 2) {
     }
 }
 
+private val Migration2To3 = object : Migration(2, 3) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE assets ADD COLUMN memberId INTEGER")
+        database.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS members (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                name TEXT NOT NULL,
+                avatarUrl TEXT,
+                isDefault INTEGER NOT NULL DEFAULT 0,
+                createdAt INTEGER NOT NULL,
+                updatedAt INTEGER NOT NULL
+            )
+            """.trimIndent()
+        )
+        val now = System.currentTimeMillis()
+        database.execSQL(
+            "INSERT INTO members (name, avatarUrl, isDefault, createdAt, updatedAt) VALUES ('默认成员', NULL, 1, $now, $now)"
+        )
+    }
+}
+
 class AppContainer(context: Context) {
     private val database: StorixDatabase by lazy {
         Room.databaseBuilder(
@@ -21,7 +43,7 @@ class AppContainer(context: Context) {
             StorixDatabase::class.java,
             "storix.db"
         )
-            .addMigrations(Migration1To2)
+            .addMigrations(Migration1To2, Migration2To3)
             .fallbackToDestructiveMigration()
             .build()
     }
@@ -33,6 +55,7 @@ class AppContainer(context: Context) {
     val assetRepository: AssetRepository by lazy {
         AssetRepository(
             assetDao = database.assetDao(),
+            memberDao = database.memberDao(),
             publicImageApi = publicImageApi
         )
     }

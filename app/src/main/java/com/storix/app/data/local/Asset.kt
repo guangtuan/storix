@@ -16,6 +16,7 @@ data class Asset(
     val currency: String = "CNY",
     val purchaseDate: Long = System.currentTimeMillis(),
     val imageUrl: String? = null,
+    val memberId: Long? = null,
     val location: String = "",
     val notes: String = "",
     val createdAt: Long = System.currentTimeMillis(),
