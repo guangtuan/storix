@@ -39,6 +39,8 @@ import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.CurrencyBitcoin
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.FileDownload
+import androidx.compose.material.icons.rounded.FileUpload
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.HomeWork
 import androidx.compose.material.icons.rounded.ImageSearch
@@ -255,6 +257,7 @@ private fun HomeScreen(
             }
             MainTab.SETTINGS -> {
                 ThemeSettingsContent(
+                    viewModel = viewModel,
                     selectedThemePreset = selectedThemePreset,
                     onThemePresetChange = onThemePresetChange,
                     modifier = Modifier
@@ -313,11 +316,44 @@ private fun MainBottomBar(selectedTab: MainTab, onSelected: (MainTab) -> Unit) {
 
 @Composable
 private fun ThemeSettingsContent(
+    viewModel: MainViewModel,
     selectedThemePreset: ThemePreset,
     onThemePresetChange: (ThemePreset) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val themeRows = remember { ThemePreset.entries.toList().chunked(2) }
+    val scope = rememberCoroutineScope()
+    var isTransferringData by rememberSaveable { mutableStateOf(false) }
+    var transferResultMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    var showImportConfirmDialog by rememberSaveable { mutableStateOf(false) }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri == null) {
+            return@rememberLauncherForActivityResult
+        }
+        scope.launch {
+            isTransferringData = true
+            val result = viewModel.exportAssetsToUri(uri)
+            transferResultMessage = result.message
+            isTransferringData = false
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri == null) {
+            return@rememberLauncherForActivityResult
+        }
+        scope.launch {
+            isTransferringData = true
+            val result = viewModel.importAssetsFromUri(uri)
+            transferResultMessage = result.message
+            isTransferringData = false
+        }
+    }
 
     LazyColumn(
         modifier = modifier,
@@ -377,6 +413,121 @@ private fun ThemeSettingsContent(
                 }
             }
         }
+
+        item {
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.PhotoLibrary,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "数据迁移",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Text(
+                        text = "导出后可在新安装版本中导入，适合从调试包迁移到正式包。",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedButton(
+                            onClick = {
+                                transferResultMessage = null
+                                val fileName = "storix-backup-${System.currentTimeMillis()}.json"
+                                exportLauncher.launch(fileName)
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = !isTransferringData
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.FileDownload,
+                                contentDescription = null
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("导出")
+                        }
+
+                        Button(
+                            onClick = {
+                                showImportConfirmDialog = true
+                            },
+                            modifier = Modifier.weight(1f),
+                            enabled = !isTransferringData
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.FileUpload,
+                                contentDescription = null
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("导入")
+                        }
+                    }
+
+                    if (isTransferringData) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            Text(
+                                text = "处理中...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    val message = transferResultMessage
+                    if (message != null) {
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    if (showImportConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showImportConfirmDialog = false },
+            title = { Text("确认导入") },
+            text = { Text("导入会覆盖当前资产数据，建议先执行一次导出备份。") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showImportConfirmDialog = false
+                        transferResultMessage = null
+                        importLauncher.launch(arrayOf("application/json", "text/plain"))
+                    }
+                ) {
+                    Text("继续")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showImportConfirmDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
     }
 }
 

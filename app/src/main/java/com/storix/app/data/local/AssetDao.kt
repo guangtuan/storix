@@ -19,4 +19,13 @@ interface AssetDao {
 
     @Delete
     suspend fun delete(asset: Asset)
+
+    @Query("SELECT * FROM assets ORDER BY id ASC")
+    suspend fun getAllAssets(): List<Asset>
+
+    @Query("DELETE FROM assets")
+    suspend fun clearAll()
+
+    @Upsert
+    suspend fun upsertAll(assets: List<Asset>)
 }

@@ -22,6 +22,15 @@ class AssetRepository(
         assetDao.delete(asset)
     }
 
+    suspend fun getAllAssets(): List<Asset> = assetDao.getAllAssets()
+
+    suspend fun replaceAssets(assets: List<Asset>) {
+        assetDao.clearAll()
+        if (assets.isNotEmpty()) {
+            assetDao.upsertAll(assets)
+        }
+    }
+
     suspend fun searchPublicImage(query: String): String? {
         val normalizedQuery = query.trim()
         if (normalizedQuery.isEmpty()) {

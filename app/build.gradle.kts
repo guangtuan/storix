@@ -1,8 +1,31 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+}
+
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use(::load)
+    }
+}
+
+fun Properties.required(name: String): String {
+    return getProperty(name)?.takeIf { it.isNotBlank() }
+        ?: throw GradleException("Missing '$name' in keystore.properties")
+}
+
+gradle.taskGraph.whenReady {
+    val isReleaseTask = allTasks.any { task ->
+        task.path.contains("Release", ignoreCase = true)
+    }
+    if (isReleaseTask && !keystorePropertiesFile.exists()) {
+        throw GradleException("keystore.properties not found. Create it from keystore.properties.example before building release.")
+    }
 }
 
 android {
@@ -19,9 +42,23 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                storeFile = file(keystoreProperties.required("storeFile"))
+                storePassword = keystoreProperties.required("storePassword")
+                keyAlias = keystoreProperties.required("keyAlias")
+                keyPassword = keystoreProperties.required("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {

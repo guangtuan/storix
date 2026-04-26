@@ -9,6 +9,9 @@ captures/
 # Local SDK and machine-specific config
 local.properties
 .android-sdk/
+keystore.properties
+*.jks
+*.keystore
 
 # IDE
 .idea/
