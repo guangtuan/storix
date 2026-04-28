@@ -153,7 +153,7 @@ private fun Card(
         modifier = modifier,
         shape = shape,
         colors = colors ?: CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = border,
+        border = border ?: CardDefaults.outlinedCardBorder(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         content()
@@ -171,7 +171,7 @@ private fun OutlinedCard(
     MaterialOutlinedCard(
         modifier = modifier,
         shape = shape,
-        border = border,
+        border = border ?: CardDefaults.outlinedCardBorder(),
         colors = colors ?: CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         content()
@@ -183,13 +183,14 @@ private fun Button(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    shape: Shape = AppButtonShape,
     content: @Composable RowScope.() -> Unit
 ) {
     MaterialButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        shape = AppButtonShape,
+        shape = shape,
         content = content
     )
 }
@@ -465,7 +466,7 @@ private fun MainBottomBar(selectedTab: MainTab, onSelected: (MainTab) -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
+            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
         color = MaterialTheme.colorScheme.surface,
         shape = AppBarShape,
         shadowElevation = 10.dp
