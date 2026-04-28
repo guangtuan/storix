@@ -151,8 +151,9 @@ private fun Card(
 ) {
     MaterialCard(
         modifier = modifier,
-        shape = AppCardShape,
+        shape = shape,
         colors = colors ?: CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = border,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         content()
@@ -169,8 +170,8 @@ private fun OutlinedCard(
 ) {
     MaterialOutlinedCard(
         modifier = modifier,
-        shape = AppCardShape,
-        border = null,
+        shape = shape,
+        border = border,
         colors = colors ?: CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         content()
@@ -1111,7 +1112,6 @@ private fun TimelineItem(asset: Asset, member: Member?, showConnector: Boolean, 
                 .weight(1f)
                 .clickable(onClick = onClick),
             shape = RoundedCornerShape(14.dp),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(
@@ -1219,8 +1219,7 @@ private fun SummaryCard(uiState: HomeUiState) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
             Text(
@@ -1257,8 +1256,7 @@ private fun SummaryMetric(title: String, value: String, modifier: Modifier = Mod
         shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.82f)
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
+        )
     ) {
         Column(modifier = Modifier.padding(horizontal = 9.dp, vertical = 7.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
@@ -1284,8 +1282,7 @@ private fun SummaryMetric(title: String, value: String, modifier: Modifier = Mod
 private fun EmptyStateCard(onAddAsset: () -> Unit) {
     Card(
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier
@@ -1325,7 +1322,6 @@ private fun AssetGridCard(
         modifier = modifier
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
-        border = if (isFeatured) BorderStroke(1.dp, accent.contentColor.copy(alpha = 0.22f)) else null,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
