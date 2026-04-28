@@ -136,10 +136,10 @@ private const val EditRoute = "edit"
 private const val FeaturedTagAlpha = 0.12f
 private val SummaryMetricMinWidth = 98.dp
 private val SummaryMetricMaxWidth = 148.dp
-private val AppCardShape = RoundedCornerShape(22.dp)
-private val AppFieldShape = RoundedCornerShape(18.dp)
-private val AppButtonShape = RoundedCornerShape(16.dp)
-private val AppBarShape = RoundedCornerShape(22.dp)
+private val AppCardShape = RoundedCornerShape(18.dp)
+private val AppFieldShape = RoundedCornerShape(14.dp)
+private val AppButtonShape = RoundedCornerShape(12.dp)
+private val AppBarShape = RoundedCornerShape(18.dp)
 private val AppPillShape = RoundedCornerShape(50)
 private val AppInset = 18.dp
 private val CardInnerPadding = 18.dp
@@ -428,7 +428,7 @@ private fun HomeScreen(
                     modifier = Modifier
                         .padding(end = 12.dp, bottom = 10.dp)
                         .size(60.dp),
-                    shape = RoundedCornerShape(18.dp),
+                    shape = RoundedCornerShape(14.dp),
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
@@ -531,7 +531,7 @@ private fun MainBottomBar(selectedTab: MainTab, onSelected: (MainTab) -> Unit) {
                 Row(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(18.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .background(
                             if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
                             else Color.Transparent
@@ -642,7 +642,7 @@ private fun ThemeSettingsContent(
                         Box(
                             modifier = Modifier
                                 .size(42.dp)
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(10.dp))
                                 .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.76f)),
                             contentAlignment = Alignment.Center
                         ) {
@@ -1329,7 +1329,7 @@ private fun SummaryCard(uiState: HomeUiState) {
 private fun SummaryMetric(title: String, value: String, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.84f))
     ) {
         Column(
@@ -1416,7 +1416,7 @@ private fun AssetGridCard(
                 Box(
                     modifier = Modifier
                         .size(42.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(10.dp))
                         .background(accent.containerColor),
                     contentAlignment = Alignment.Center
                 ) {
@@ -2291,7 +2291,7 @@ private fun TelegramTopBar(
                 IconButton(
                     onClick = onBack,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(14.dp))
+                        .clip(RoundedCornerShape(12.dp))
                         .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.82f))
                 ) {
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
