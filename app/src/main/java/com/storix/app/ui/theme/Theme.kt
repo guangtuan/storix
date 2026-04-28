@@ -11,14 +11,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 enum class ThemePreset(val displayName: String, val swatch: Color) {
-    MANJARO(displayName = "雾松", swatch = Color(0xFF6D8A7A)),
-    MINT(displayName = "薄荷", swatch = Color(0xFF7B9B92)),
-    OCEAN(displayName = "雾蓝", swatch = Color(0xFF748A9B)),
-    SUNSET(displayName = "陶土", swatch = Color(0xFFB8836C)),
-    LAVENDER(displayName = "灰紫", swatch = Color(0xFF8A84A7)),
-    AMBER(displayName = "沙金", swatch = Color(0xFFB49A70)),
-    ROSE(displayName = "雾粉", swatch = Color(0xFFB58491)),
-    SLATE(displayName = "石板", swatch = Color(0xFF6D808C))
+    MANJARO(displayName = "雾松", swatch = Color(0xFF86A398)),
+    MINT(displayName = "薄荷", swatch = Color(0xFF92B6AA)),
+    OCEAN(displayName = "雾蓝", swatch = Color(0xFF9CB2D2)),
+    SUNSET(displayName = "陶土", swatch = Color(0xFFE1A38E)),
+    LAVENDER(displayName = "灰紫", swatch = Color(0xFFB58BEE)),
+    AMBER(displayName = "沙金", swatch = Color(0xFFD5B27D)),
+    ROSE(displayName = "雾粉", swatch = Color(0xFFD7A0B3)),
+    SLATE(displayName = "石板", swatch = Color(0xFF9EADBE))
 }
 
 private data class ThemeTones(
@@ -38,108 +38,108 @@ private data class ThemeTones(
 private fun tonesFor(preset: ThemePreset): ThemeTones {
     return when (preset) {
         ThemePreset.MANJARO -> ThemeTones(
-            primary = Color(0xFF6D8A7A),
-            secondary = Color(0xFF8FA39A),
-            tertiary = Color(0xFFE6EEE8),
-            lightBackground = Color(0xFFFAFAF8),
-            lightSurface = Color(0xFFFFFFFF),
-            lightSurfaceVariant = Color(0xFFF1F3EF),
-            lightOnSurfaceVariant = Color(0xFF6A726D),
-            darkBackground = Color(0xFF141715),
-            darkSurface = Color(0xFF1B1F1D),
-            darkSurfaceVariant = Color(0xFF252A27),
-            darkOnSurfaceVariant = Color(0xFFAAB2AD)
+            primary = Color(0xFF86A398),
+            secondary = Color(0xFFD9E6DF),
+            tertiary = Color(0xFFFDE8E2),
+            lightBackground = Color(0xFFF5F0F8),
+            lightSurface = Color(0xFFFFFCFF),
+            lightSurfaceVariant = Color(0xFFF2EEF6),
+            lightOnSurfaceVariant = Color(0xFF756F7E),
+            darkBackground = Color(0xFF18171D),
+            darkSurface = Color(0xFF23212A),
+            darkSurfaceVariant = Color(0xFF2D2934),
+            darkOnSurfaceVariant = Color(0xFFB8B2C2)
         )
         ThemePreset.MINT -> ThemeTones(
-            primary = Color(0xFF7B9B92),
-            secondary = Color(0xFF94AAA4),
-            tertiary = Color(0xFFE8EFEC),
-            lightBackground = Color(0xFFFAFAF8),
-            lightSurface = Color(0xFFFFFFFF),
-            lightSurfaceVariant = Color(0xFFF0F3F1),
-            lightOnSurfaceVariant = Color(0xFF67726E),
-            darkBackground = Color(0xFF131716),
-            darkSurface = Color(0xFF1A1F1D),
-            darkSurfaceVariant = Color(0xFF242A27),
-            darkOnSurfaceVariant = Color(0xFFA7B1AD)
+            primary = Color(0xFF92B6AA),
+            secondary = Color(0xFFDFF0EA),
+            tertiary = Color(0xFFFDE8E2),
+            lightBackground = Color(0xFFF5F0F8),
+            lightSurface = Color(0xFFFFFCFF),
+            lightSurfaceVariant = Color(0xFFF1EEF7),
+            lightOnSurfaceVariant = Color(0xFF726E7B),
+            darkBackground = Color(0xFF18171D),
+            darkSurface = Color(0xFF23212A),
+            darkSurfaceVariant = Color(0xFF2D2934),
+            darkOnSurfaceVariant = Color(0xFFB7B2C0)
         )
         ThemePreset.OCEAN -> ThemeTones(
-            primary = Color(0xFF748A9B),
-            secondary = Color(0xFF8E9FAD),
-            tertiary = Color(0xFFE7EDF1),
-            lightBackground = Color(0xFFFAFAFA),
-            lightSurface = Color(0xFFFFFFFF),
-            lightSurfaceVariant = Color(0xFFF0F2F4),
-            lightOnSurfaceVariant = Color(0xFF68727A),
-            darkBackground = Color(0xFF14171A),
-            darkSurface = Color(0xFF1B2023),
-            darkSurfaceVariant = Color(0xFF252B30),
-            darkOnSurfaceVariant = Color(0xFFA9B1B8)
+            primary = Color(0xFF9CB2D2),
+            secondary = Color(0xFFE2ECFA),
+            tertiary = Color(0xFFFCEADF),
+            lightBackground = Color(0xFFF4F1F9),
+            lightSurface = Color(0xFFFFFCFF),
+            lightSurfaceVariant = Color(0xFFF1EEF8),
+            lightOnSurfaceVariant = Color(0xFF71707B),
+            darkBackground = Color(0xFF17171D),
+            darkSurface = Color(0xFF22232A),
+            darkSurfaceVariant = Color(0xFF2C2E36),
+            darkOnSurfaceVariant = Color(0xFFB6B4BE)
         )
         ThemePreset.SUNSET -> ThemeTones(
-            primary = Color(0xFFB8836C),
-            secondary = Color(0xFFC69A87),
-            tertiary = Color(0xFFF4E9E3),
-            lightBackground = Color(0xFFFBF9F8),
-            lightSurface = Color(0xFFFFFFFF),
-            lightSurfaceVariant = Color(0xFFF4EFEB),
-            lightOnSurfaceVariant = Color(0xFF756A64),
-            darkBackground = Color(0xFF171412),
-            darkSurface = Color(0xFF1F1B19),
-            darkSurfaceVariant = Color(0xFF2A2522),
-            darkOnSurfaceVariant = Color(0xFFB8AEA9)
+            primary = Color(0xFFE1A38E),
+            secondary = Color(0xFFF6D8CB),
+            tertiary = Color(0xFFF4E4FF),
+            lightBackground = Color(0xFFF7F1F8),
+            lightSurface = Color(0xFFFFFCFF),
+            lightSurfaceVariant = Color(0xFFF7EEF2),
+            lightOnSurfaceVariant = Color(0xFF7C6F75),
+            darkBackground = Color(0xFF1A171A),
+            darkSurface = Color(0xFF262228),
+            darkSurfaceVariant = Color(0xFF312B31),
+            darkOnSurfaceVariant = Color(0xFFC0B2BB)
         )
         ThemePreset.LAVENDER -> ThemeTones(
-            primary = Color(0xFF8A84A7),
-            secondary = Color(0xFF9E97B8),
-            tertiary = Color(0xFFECEAF3),
-            lightBackground = Color(0xFFFAFAFA),
-            lightSurface = Color(0xFFFFFFFF),
-            lightSurfaceVariant = Color(0xFFF1F0F5),
-            lightOnSurfaceVariant = Color(0xFF706C7F),
-            darkBackground = Color(0xFF151418),
-            darkSurface = Color(0xFF1D1B20),
-            darkSurfaceVariant = Color(0xFF27252B),
-            darkOnSurfaceVariant = Color(0xFFB0AEB9)
+            primary = Color(0xFFB58BEE),
+            secondary = Color(0xFFE7D8FD),
+            tertiary = Color(0xFFFFE8E0),
+            lightBackground = Color(0xFFF5F0FB),
+            lightSurface = Color(0xFFFFFCFF),
+            lightSurfaceVariant = Color(0xFFF2EDF9),
+            lightOnSurfaceVariant = Color(0xFF736D80),
+            darkBackground = Color(0xFF17151C),
+            darkSurface = Color(0xFF231F28),
+            darkSurfaceVariant = Color(0xFF2D2833),
+            darkOnSurfaceVariant = Color(0xFFB8B2C4)
         )
         ThemePreset.AMBER -> ThemeTones(
-            primary = Color(0xFFB49A70),
-            secondary = Color(0xFFC2AA83),
-            tertiary = Color(0xFFF3ECDD),
-            lightBackground = Color(0xFFFBFAF7),
-            lightSurface = Color(0xFFFFFFFF),
-            lightSurfaceVariant = Color(0xFFF4F0E7),
-            lightOnSurfaceVariant = Color(0xFF746B5E),
-            darkBackground = Color(0xFF161513),
-            darkSurface = Color(0xFF1E1C1A),
-            darkSurfaceVariant = Color(0xFF282522),
-            darkOnSurfaceVariant = Color(0xFFB8B0A4)
+            primary = Color(0xFFD5B27D),
+            secondary = Color(0xFFF6E6C7),
+            tertiary = Color(0xFFF5E1FF),
+            lightBackground = Color(0xFFF7F2F8),
+            lightSurface = Color(0xFFFFFCFF),
+            lightSurfaceVariant = Color(0xFFF5EEF6),
+            lightOnSurfaceVariant = Color(0xFF7A717A),
+            darkBackground = Color(0xFF1A1719),
+            darkSurface = Color(0xFF252124),
+            darkSurfaceVariant = Color(0xFF312A2F),
+            darkOnSurfaceVariant = Color(0xFFC0B5BC)
         )
         ThemePreset.ROSE -> ThemeTones(
-            primary = Color(0xFFB58491),
-            secondary = Color(0xFFC49CA5),
-            tertiary = Color(0xFFF3E8EB),
-            lightBackground = Color(0xFFFBFAFA),
-            lightSurface = Color(0xFFFFFFFF),
-            lightSurfaceVariant = Color(0xFFF4EFF1),
-            lightOnSurfaceVariant = Color(0xFF756B6F),
-            darkBackground = Color(0xFF171416),
-            darkSurface = Color(0xFF1F1B1D),
-            darkSurfaceVariant = Color(0xFF2A2527),
-            darkOnSurfaceVariant = Color(0xFFB8ADB1)
+            primary = Color(0xFFD7A0B3),
+            secondary = Color(0xFFF4D9E3),
+            tertiary = Color(0xFFFFEAE2),
+            lightBackground = Color(0xFFF7F1F7),
+            lightSurface = Color(0xFFFFFCFF),
+            lightSurfaceVariant = Color(0xFFF7EDF4),
+            lightOnSurfaceVariant = Color(0xFF7B7078),
+            darkBackground = Color(0xFF1A161B),
+            darkSurface = Color(0xFF251F24),
+            darkSurfaceVariant = Color(0xFF302830),
+            darkOnSurfaceVariant = Color(0xFFC0B4BD)
         )
         ThemePreset.SLATE -> ThemeTones(
-            primary = Color(0xFF6D808C),
-            secondary = Color(0xFF8898A1),
-            tertiary = Color(0xFFE8ECEF),
-            lightBackground = Color(0xFFFAFAFA),
-            lightSurface = Color(0xFFFFFFFF),
-            lightSurfaceVariant = Color(0xFFF0F2F3),
-            lightOnSurfaceVariant = Color(0xFF697278),
-            darkBackground = Color(0xFF141618),
-            darkSurface = Color(0xFF1B1F21),
-            darkSurfaceVariant = Color(0xFF252A2D),
-            darkOnSurfaceVariant = Color(0xFFA8B0B4)
+            primary = Color(0xFF9EADBE),
+            secondary = Color(0xFFE2E9F1),
+            tertiary = Color(0xFFFFE9E4),
+            lightBackground = Color(0xFFF4F0F8),
+            lightSurface = Color(0xFFFFFCFF),
+            lightSurfaceVariant = Color(0xFFF1EDF5),
+            lightOnSurfaceVariant = Color(0xFF726F79),
+            darkBackground = Color(0xFF17171C),
+            darkSurface = Color(0xFF212128),
+            darkSurfaceVariant = Color(0xFF2A2A33),
+            darkOnSurfaceVariant = Color(0xFFB5B5C0)
         )
     }
 }
@@ -154,14 +154,15 @@ private fun lightColors(tones: ThemeTones) = lightColorScheme(
     surface = tones.lightSurface,
     surfaceVariant = tones.lightSurfaceVariant,
     onPrimary = Color.White,
-    onSecondary = Color.White,
-    onPrimaryContainer = Color(0xFF1C2120),
-    onSecondaryContainer = Color(0xFF1C2120),
-    onBackground = Color(0xFF1C2120),
-    onSurface = Color(0xFF1C2120),
+    onSecondary = Color(0xFF2B2434),
+    onPrimaryContainer = Color(0xFF241F2B),
+    onSecondaryContainer = Color(0xFF241F2B),
+    onBackground = Color(0xFF241F2B),
+    onSurface = Color(0xFF241F2B),
     onSurfaceVariant = tones.lightOnSurfaceVariant,
     outline = tones.lightOnSurfaceVariant.copy(alpha = 0.18f),
-    outlineVariant = tones.lightSurfaceVariant
+    outlineVariant = Color.White.copy(alpha = 0.56f),
+    surfaceTint = Color.White.copy(alpha = 0.8f)
 )
 
 private fun darkColors(tones: ThemeTones) = darkColorScheme(
@@ -174,14 +175,15 @@ private fun darkColors(tones: ThemeTones) = darkColorScheme(
     surface = tones.darkSurface,
     surfaceVariant = tones.darkSurfaceVariant,
     onPrimary = Color.White,
-    onSecondary = Color.White,
+    onSecondary = Color(0xFFF5F1F8),
     onPrimaryContainer = Color(0xFFF3F5F4),
     onSecondaryContainer = Color(0xFFF3F5F4),
     onBackground = Color(0xFFF3F5F4),
     onSurface = Color(0xFFF3F5F4),
     onSurfaceVariant = tones.darkOnSurfaceVariant,
     outline = tones.darkOnSurfaceVariant.copy(alpha = 0.22f),
-    outlineVariant = tones.darkSurfaceVariant
+    outlineVariant = tones.darkSurfaceVariant,
+    surfaceTint = Color.White.copy(alpha = 0.08f)
 )
 
 @Composable
