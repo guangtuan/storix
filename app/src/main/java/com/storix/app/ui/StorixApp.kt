@@ -5,14 +5,15 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,6 +35,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Notes
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.CalendarMonth
@@ -64,21 +68,25 @@ import androidx.compose.material.icons.rounded.DesktopWindows
 import androidx.compose.material.icons.rounded.Keyboard
 import androidx.compose.material.icons.rounded.Chair
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button as MaterialButton
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card as MaterialCard
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CardColors
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChip as MaterialFilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton as MaterialOutlinedButton
+import androidx.compose.material3.OutlinedCard as MaterialOutlinedCard
+import androidx.compose.material3.OutlinedTextField as MaterialOutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -97,6 +105,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -126,14 +135,175 @@ private const val EditRoute = "edit"
 private const val FeaturedTagAlpha = 0.12f
 private val SummaryMetricMinWidth = 98.dp
 private val SummaryMetricMaxWidth = 148.dp
+private val AppCardShape = RoundedCornerShape(10.dp)
+private val AppFieldShape = RoundedCornerShape(10.dp)
+private val AppButtonShape = RoundedCornerShape(8.dp)
+private val AppBarShape = RoundedCornerShape(18.dp)
+private val AppPillShape = RoundedCornerShape(50)
+
+@Composable
+private fun Card(
+    modifier: Modifier = Modifier,
+    shape: Shape = AppCardShape,
+    colors: CardColors? = null,
+    border: BorderStroke? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    MaterialCard(
+        modifier = modifier,
+        shape = AppCardShape,
+        colors = colors ?: CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun OutlinedCard(
+    modifier: Modifier = Modifier,
+    shape: Shape = AppCardShape,
+    border: BorderStroke? = null,
+    colors: CardColors? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    MaterialOutlinedCard(
+        modifier = modifier,
+        shape = AppCardShape,
+        border = null,
+        colors = colors ?: CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun Button(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    content: @Composable RowScope.() -> Unit
+) {
+    MaterialButton(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        shape = AppButtonShape,
+        content = content
+    )
+}
+
+@Composable
+private fun OutlinedButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    content: @Composable RowScope.() -> Unit
+) {
+    MaterialOutlinedButton(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        shape = AppButtonShape,
+        border = null,
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        content = content
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun OutlinedTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    label: @Composable (() -> Unit)? = null,
+    placeholder: @Composable (() -> Unit)? = null,
+    singleLine: Boolean = false,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
+) {
+    MaterialOutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        label = label,
+        placeholder = placeholder,
+        singleLine = singleLine,
+        keyboardOptions = keyboardOptions,
+        shape = AppFieldShape,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Color.Transparent,
+            unfocusedBorderColor = Color.Transparent,
+            disabledBorderColor = Color.Transparent,
+            errorBorderColor = Color.Transparent,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
+            errorContainerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FilterChip(
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    label: @Composable () -> Unit,
+    leadingIcon: (@Composable (() -> Unit))? = null
+) {
+    MaterialFilterChip(
+        selected = selected,
+        onClick = onClick,
+        modifier = modifier,
+        label = label,
+        leadingIcon = leadingIcon,
+        shape = AppPillShape,
+        border = null,
+        colors = FilterChipDefaults.filterChipColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+            selectedLabelColor = MaterialTheme.colorScheme.onSurface,
+            selectedLeadingIconColor = MaterialTheme.colorScheme.primary
+        )
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AssistChip(
+    onClick: () -> Unit,
+    label: @Composable () -> Unit,
+    leadingIcon: (@Composable (() -> Unit))? = null
+) {
+    androidx.compose.material3.AssistChip(
+        onClick = onClick,
+        label = label,
+        leadingIcon = leadingIcon,
+        shape = AppPillShape,
+        border = null,
+        colors = AssistChipDefaults.assistChipColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            labelColor = MaterialTheme.colorScheme.onSurface,
+            leadingIconContentColor = MaterialTheme.colorScheme.primary
+        )
+    )
+}
 
 private enum class MainTab(
     val label: String,
-    val icon: ImageVector
+    val activeIcon: ImageVector,
+    val inactiveIcon: ImageVector
 ) {
-    HOME(label = "首页", icon = Icons.Rounded.Home),
-    TIMELINE(label = "时间轴", icon = Icons.Rounded.Schedule),
-    SETTINGS(label = "设置", icon = Icons.Rounded.Settings)
+    HOME(label = "首页", activeIcon = Icons.Rounded.Home, inactiveIcon = Icons.Outlined.Home),
+    TIMELINE(label = "时间轴", activeIcon = Icons.Rounded.Schedule, inactiveIcon = Icons.Outlined.Schedule),
+    SETTINGS(label = "设置", activeIcon = Icons.Rounded.Settings, inactiveIcon = Icons.Outlined.Settings)
 }
 
 private data class SummaryMetricItem(val title: String, val value: String)
@@ -236,8 +406,8 @@ private fun HomeScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
-                    contentPadding = PaddingValues(start = 10.dp, top = 6.dp, end = 10.dp, bottom = 92.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    contentPadding = PaddingValues(start = 14.dp, top = 10.dp, end = 14.dp, bottom = 96.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     item {
                         SummaryCard(uiState = uiState)
@@ -294,49 +464,53 @@ private fun HomeScreen(
 
 @Composable
 private fun MainBottomBar(selectedTab: MainTab, onSelected: (MainTab) -> Unit) {
-    Row(
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.96f))
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.9f),
-                shape = RoundedCornerShape(20.dp)
-            )
-            .padding(6.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        color = MaterialTheme.colorScheme.surface,
+        shape = AppBarShape,
+        shadowElevation = 10.dp
     ) {
-        MainTab.values().forEach { tab ->
-            val selected = selectedTab == tab
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(
-                        if (selected) {
-                            MaterialTheme.colorScheme.primaryContainer
-                        } else {
-                            Color.Transparent
-                        }
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            MainTab.values().forEach { tab ->
+                val selected = selectedTab == tab
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onSelected(tab) }
+                        .padding(vertical = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = if (selected) tab.activeIcon else tab.inactiveIcon,
+                        contentDescription = tab.label,
+                        tint = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    .clickable { onSelected(tab) }
-                    .padding(vertical = 10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Icon(
-                    imageVector = tab.icon,
-                    contentDescription = tab.label,
-                    tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = tab.label,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
-                )
+                    Text(
+                        text = tab.label,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
+                    )
+                    Box(
+                        modifier = Modifier
+                            .width(if (selected) 20.dp else 14.dp)
+                            .height(2.dp)
+                            .clip(AppPillShape)
+                            .background(
+                                if (selected) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceVariant
+                                }
+                            )
+                    )
+                }
             }
         }
     }
@@ -402,7 +576,7 @@ private fun ThemeSettingsContent(
 
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(start = 12.dp, top = 10.dp, end = 12.dp, bottom = 88.dp),
+        contentPadding = PaddingValues(start = 14.dp, top = 12.dp, end = 14.dp, bottom = 92.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
@@ -426,13 +600,13 @@ private fun ThemeSettingsContent(
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = "主题色",
+                            text = "界面风格",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
                     Text(
-                        text = "选择你喜欢的界面主题色，立即生效。",
+                        text = "使用更克制的浅色调，保持页面留白和轻盈层次。",
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     themeRows.forEach { row ->
@@ -1236,12 +1410,20 @@ private fun AssetGridCard(
 
 @Composable
 private fun AssetMetaTag(text: String, containerColor: Color, contentColor: Color) {
-    Box(
+    Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(7.dp))
+            .clip(AppPillShape)
             .background(containerColor)
-            .padding(horizontal = 6.dp, vertical = 1.dp)
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
+        Box(
+            modifier = Modifier
+                .size(5.dp)
+                .clip(CircleShape)
+                .background(contentColor.copy(alpha = 0.75f))
+        )
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall,
@@ -1866,7 +2048,7 @@ private fun AssetImageCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(220.dp)
-                    .clip(RoundedCornerShape(16.dp)),
+                    .clip(AppCardShape),
                 contentScale = ContentScale.Crop
             )
         } else {
@@ -1914,52 +2096,52 @@ private data class CategoryAccent(val containerColor: Color, val contentColor: C
 
 private fun categoryAccent(category: AssetCategory) = when (category) {
     AssetCategory.REAL_ESTATE -> CategoryAccent(
-        containerColor = Color(0xFFE7F0FF),
-        contentColor = Color(0xFF2D5DB3)
+        containerColor = Color(0xFFEFF3F7),
+        contentColor = Color(0xFF61788B)
     )
     AssetCategory.PHONE -> CategoryAccent(
-        containerColor = Color(0xFFE6F3FF),
-        contentColor = Color(0xFF236A94)
+        containerColor = Color(0xFFEFF5F6),
+        contentColor = Color(0xFF5D7D82)
     )
     AssetCategory.LAPTOP -> CategoryAccent(
-        containerColor = Color(0xFFEAF4F0),
-        contentColor = Color(0xFF2F6B59)
+        containerColor = Color(0xFFF0F4F1),
+        contentColor = Color(0xFF617B6C)
     )
     AssetCategory.DESKTOP -> CategoryAccent(
-        containerColor = Color(0xFFE8EEF9),
-        contentColor = Color(0xFF3C5A91)
+        containerColor = Color(0xFFF0F2F7),
+        contentColor = Color(0xFF66748A)
     )
     AssetCategory.TABLET -> CategoryAccent(
-        containerColor = Color(0xFFEEF0FF),
-        contentColor = Color(0xFF5A5AC9)
+        containerColor = Color(0xFFF2F1F7),
+        contentColor = Color(0xFF74708F)
     )
     AssetCategory.MONITOR -> CategoryAccent(
-        containerColor = Color(0xFFEAF7F7),
-        contentColor = Color(0xFF2C6F73)
+        containerColor = Color(0xFFEEF5F5),
+        contentColor = Color(0xFF5D7E80)
     )
     AssetCategory.KEYBOARD -> CategoryAccent(
-        containerColor = Color(0xFFF3ECFF),
-        contentColor = Color(0xFF7550B2)
+        containerColor = Color(0xFFF3F0F6),
+        contentColor = Color(0xFF796F8A)
     )
     AssetCategory.STORAGE -> CategoryAccent(
-        containerColor = Color(0xFFFFF1E4),
-        contentColor = Color(0xFF9A5A17)
+        containerColor = Color(0xFFF6F1E8),
+        contentColor = Color(0xFF87715A)
     )
     AssetCategory.FURNITURE -> CategoryAccent(
-        containerColor = Color(0xFFF6EEDD),
-        contentColor = Color(0xFF8B6332)
+        containerColor = Color(0xFFF4F0E8),
+        contentColor = Color(0xFF846F58)
     )
     AssetCategory.PHYSICAL -> CategoryAccent(
-        containerColor = StorixGreenLight,
-        contentColor = Color(0xFF3D5F52)
+        containerColor = StorixGreenLight.copy(alpha = 0.75f),
+        contentColor = Color(0xFF5E776D)
     )
     AssetCategory.NFT -> CategoryAccent(
-        containerColor = Color(0xFFF6E9FF),
-        contentColor = Color(0xFF8650C7)
+        containerColor = Color(0xFFF3EDF6),
+        contentColor = Color(0xFF7A7086)
     )
     AssetCategory.CRYPTO -> CategoryAccent(
-        containerColor = Color(0xFFFFF1D6),
-        contentColor = Color(0xFF7A4A00)
+        containerColor = Color(0xFFF7F1E3),
+        contentColor = Color(0xFF856F54)
     )
 }
 
