@@ -35,9 +35,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Notes
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Home as OutlinedHome
+import androidx.compose.material.icons.outlined.Schedule as OutlinedSchedule
+import androidx.compose.material.icons.outlined.Settings as OutlinedSettings
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.CalendarMonth
@@ -267,10 +267,8 @@ private fun FilterChip(
         colors = FilterChipDefaults.filterChipColors(
             containerColor = MaterialTheme.colorScheme.surface,
             labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
             selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-            selectedLabelColor = MaterialTheme.colorScheme.onSurface,
-            selectedLeadingIconColor = MaterialTheme.colorScheme.primary
+            selectedLabelColor = MaterialTheme.colorScheme.onSurface
         )
     )
 }
@@ -290,8 +288,7 @@ private fun AssistChip(
         border = null,
         colors = AssistChipDefaults.assistChipColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            labelColor = MaterialTheme.colorScheme.onSurface,
-            leadingIconContentColor = MaterialTheme.colorScheme.primary
+            labelColor = MaterialTheme.colorScheme.onSurface
         )
     )
 }
@@ -301,9 +298,9 @@ private enum class MainTab(
     val activeIcon: ImageVector,
     val inactiveIcon: ImageVector
 ) {
-    HOME(label = "首页", activeIcon = Icons.Rounded.Home, inactiveIcon = Icons.Outlined.Home),
-    TIMELINE(label = "时间轴", activeIcon = Icons.Rounded.Schedule, inactiveIcon = Icons.Outlined.Schedule),
-    SETTINGS(label = "设置", activeIcon = Icons.Rounded.Settings, inactiveIcon = Icons.Outlined.Settings)
+    HOME(label = "首页", activeIcon = Icons.Rounded.Home, inactiveIcon = Icons.Outlined.OutlinedHome),
+    TIMELINE(label = "时间轴", activeIcon = Icons.Rounded.Schedule, inactiveIcon = Icons.Outlined.OutlinedSchedule),
+    SETTINGS(label = "设置", activeIcon = Icons.Rounded.Settings, inactiveIcon = Icons.Outlined.OutlinedSettings)
 }
 
 private data class SummaryMetricItem(val title: String, val value: String)
